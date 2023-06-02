@@ -9,7 +9,7 @@
 - Zero initial condition
 - Quadratic
 - Output
-    - $\mathbf C = \frac{1}{n} \begin{bmatrix} 1 & 1 & 1 & \cdots & 1 \end{bmatrix}$  where $n$ is the state dimension
+    - $\mathbf{C} = \frac{1}{n} \begin{bmatrix} 1 & 1 & 1 & \cdots & 1 \end{bmatrix}$  where $n$ is the state dimension
 - Reference input vector of 1
 - Integrated with semi-implicit Euler scheme with time step of $\Delta t = 1e\text{-}4$
 
