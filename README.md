@@ -1,5 +1,5 @@
 <h1 align="center">
-  <img src="https://github.com/smallpondtom/PoMoReDa/blob/main/logo/PoMoReDa_small.png?raw=true" alt="PoMoReDa Logo" width=400/>
+  <img src="https://github.com/smallpondtom/PoMoReDa/blob/main/logo/PoMoReDa_small.png?raw=true" alt="PoMoReDa Logo" width=600/>
 </h1><br>
 
 [![Operator Inference Paper](https://img.shields.io/badge/DOI-10.1038%2Fs41592--019--0686--2-blue)](
