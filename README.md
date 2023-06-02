@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://github.com/smallpondtom/PoMoReDa/blob/master/logo/PoMoReDa_small.png?raw=true" alt="PoMoReDa Logo"/>
+  <img src="https://github.com/smallpondtom/PoMoReDa/blob/main/logo/PoMoReDa_small.png?raw=true" alt="PoMoReDa Logo"/>
 </p>
 ---
 
