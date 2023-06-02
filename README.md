@@ -4,6 +4,8 @@
 
 [![Powered by ACE Lab](https://img.shields.io/badge/powered%20by-NumFOCUS-orange.svg?style=flat&colorA=E1523D&colorB=007D8A)](
 https://sites.google.com/view/elizabeth-qian/research/ace-group)
+[![License](https://img.shields.io/github/license/smallpondtom/PoMoReDa)](
+https://github.com/smallpondtom/PoMoReDa/blob/main/license.txt)
 [![Operator Inference Paper](https://img.shields.io/badge/DOI-10.1038%2Fs41592--019--0686--2-blue)](
 http://dx.doi.org/10.1016/j.cma.2016.03.025)
 [![Lift & Learn Paper](https://img.shields.io/badge/DOI-10.1038%2Fs41592--019--0686--2-blue)](
