@@ -12,7 +12,7 @@ To produce the data, [Qian et al. 2020](https://linkinghub.elsevier.com/retrieve
 $$
 \begin{align}
   \dot{\mathbf x} &= \mathbf A \mathbf x + \mathbf H(\mathbf x \otimes \mathbf x) + (\mathbf N\mathbf x)\mathbf u + \mathbf K \\
-  \mathbf y &= \mathbf C \mathbf
+  \mathbf y &= \mathbf C
 \end{align}
 $$
 - A: Linear Operator
