@@ -24,3 +24,16 @@ Energy preserving modified Burgers' equation explained in [[Aref and Daripa 1984
 - No input
 - No output
 - Integrated with semi-implicit Euler scheme with timestep $\Delta t=1e\text{-}4$
+
+#### Operators
+$$
+\begin{align}
+    \dot{\mathbf x} &= \mathbf A \mathbf x + \mathbf H(\mathbf x \otimes \mathbf x) + \mathbf B\mathbf u \\
+    \mathbf y &= \mathbf C \mathbf x
+\end{align}
+$$
+- A: Linear Operator
+- B: Input Operator
+- C: Output Operator
+- H: Quadratic Operator
+- F: Quadratic Operator (without redundancy)
