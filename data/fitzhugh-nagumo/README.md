@@ -10,10 +10,10 @@ To produce the data, [Qian et al. 2020](https://linkinghub.elsevier.com/retrieve
 
 ##### Operators
 $$
-\begin{align*}
+\begin{align}
   \dot{\mathbf x} &= \mathbf A \mathbf x + \mathbf H(\mathbf x \otimes \mathbf x) + (\mathbf N\mathbf x)\mathbf u + \mathbf K \\
   \mathbf y &= \mathbf C \mathbf
-\end{align*}
+\end{align}
 $$
 - A: Linear Operator
 - B: Input Operator
