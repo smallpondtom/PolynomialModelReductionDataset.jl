@@ -14,14 +14,17 @@ Abstract type for the model.
 """
 abstract type AbstractModel end
 
-include("models/AllenCahn.jl")
-include("models/Burgers.jl")
-include("models/ChafeeInfante.jl")
-include("models/FisherKPP.jl")
-include("models/FitzHughNagumo.jl")
-include("models/Gardner.jl")
-include("models/Heat1D.jl")
-include("models/Heat2D.jl")
-include("models/KuramotoSivashinsky.jl")
+# 1D models
+include("1D/AllenCahn.jl")
+include("1D/Burgers.jl")
+include("1D/ChafeeInfante.jl")
+include("1D/FisherKPP.jl")
+include("1D/FitzHughNagumo.jl")
+include("1D/Gardner.jl")
+include("1D/Heat1D.jl")
+include("1D/KuramotoSivashinsky.jl")
+
+# 2D models
+include("2D/Heat2D.jl")
 
 end
