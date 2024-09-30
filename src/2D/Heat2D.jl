@@ -1,4 +1,18 @@
 """
+    2D Heat Equation Model
+"""
+module Heat2D
+
+using DocStringExtensions
+using Kronecker: ⊗
+using LinearAlgebra
+using SparseArrays
+
+import ..PolynomialModelReductionDataset: AbstractModel, adjust_input
+
+export Heat2DModel
+
+"""
 $(TYPEDEF)
 
 2 Dimensional Heat Equation Model
@@ -26,7 +40,7 @@ $(TYPEDEF)
 - `finite_diff_model::Function`: finite difference model
 - `integrate_model::Function`: integrate model
 """
-mutable struct Heat2D <: AbstractModel
+mutable struct Heat2DModel <: AbstractModel
     # Domains
     spatial_domain::Tuple{Tuple{<:Real,<:Real}, Tuple{<:Real,<:Real}}  # spatial domain (x, y)
     time_domain::Tuple{Real,Real}  # temporal domain
@@ -60,7 +74,7 @@ mutable struct Heat2D <: AbstractModel
 end
 
 
-function Heat2D(;spatial_domain::Tuple{Tuple{Real,Real},Tuple{Real,Real}}, time_domain::Tuple{Real,Real}, 
+function Heat2DModel(;spatial_domain::Tuple{Tuple{Real,Real},Tuple{Real,Real}}, time_domain::Tuple{Real,Real}, 
                  Δx::Real, Δy::Real, Δt::Real, diffusion_coeffs::Union{AbstractArray{<:Real},Real}, BC::Tuple{Symbol,Symbol})
     # Discritization grid info
     possible_BC = (:periodic, :dirichlet, :neumann, :mixed, :robin, :cauchy, :flux)
@@ -88,7 +102,7 @@ function Heat2D(;spatial_domain::Tuple{Tuple{Real,Real},Tuple{Real,Real}}, time_
     param_dim = length(diffusion_coeffs)
     param_domain = extrema(diffusion_coeffs)
 
-    Heat2D(spatial_domain, time_domain, param_domain, Δx, Δy, Δt,
+    Heat2DModel(spatial_domain, time_domain, param_domain, Δx, Δy, Δt,
            spatial_dim, time_dim, param_dim, BC, IC, diffusion_coeffs,
            xspan, yspan, tspan, 
            finite_diff_model, integrate_model)
@@ -99,7 +113,7 @@ function finite_diff_dirichlet_model(Nx::Real, Ny::Real, Δx::Real, Δy::Real, �
     # A matrix
     Ax = spdiagm(0 => (-2)*ones(Nx), 1 => ones(Nx-1), -1 => ones(Nx-1)) * μ / Δx^2
     Ay = spdiagm(0 => (-2)*ones(Ny), 1 => ones(Ny-1), -1 => ones(Ny-1)) * μ / Δy^2
-    A = kron(Ay, I(Nx)) + kron(I(Ny), Ax)
+    A = (Ay ⊗ I(Nx)) + (I(Ny) ⊗ Ax)
 
     # B matrix (different inputs for each boundary)
     Bx = spzeros(Nx*Ny,2)
@@ -129,7 +143,7 @@ Generate A and B matrices for the 2D heat equation.
 - `A::Matrix{Float64}`: A matrix
 - `B::Matrix{Float64}`: B matrix
 """
-function finite_diff_model(model::Heat2D, μ::Real)
+function finite_diff_model(model::Heat2DModel, μ::Real)
     if all(model.BC .== :dirichlet)
         return finite_diff_dirichlet_model(model.spatial_dim..., model.Δx, model.Δy, μ)
     else
@@ -164,4 +178,107 @@ function integrate_model(A, B, U, tdata, IC)
         state[:,j] = (I - Δt * A) \ (state[:,j-1] + B * U[:,j-1] * Δt)
     end
     return state
+end
+
+
+"""
+$(SIGNATURES)
+
+Integrate the 1D Heat Equation Model using 3 different methods:
+- Forward Euler
+- Backward Euler
+- Crank Nicolson
+
+# Arguments
+- `tdata::AbstractVector{T}`: time data
+- `x0::AbstractVector{T}`: initial condition
+- `u::AbstractArray{T}=[]`: input data
+
+# Keyword Arguments
+- `operators`: operators A and B
+- `system_input::Bool=false`: system input flag
+- `integrator_type::Symbol=:ForwardEuler`: integrator type
+
+# Returns
+- `x::Array{T,2}`: integrated model states
+
+# Notes
+- Input is assumed to be a matrix of size (spatial dimension x time dimension).
+  You will receive a warning if the input is a tall vector/column vector.
+- `operators` should be in the order of [A, B] if `system_input` is true.
+"""
+function integrate_model(tdata::AbstractVector{T}, u0::AbstractVector{T},
+                         input::AbstractArray{T}=T[]; kwargs...) where {T<:Real}
+    # Check that keyword exists in kwargs
+    @assert haskey(kwargs, :operators) "Keyword :operators not found"
+    @assert haskey(kwargs, :system_input) "Keyword :system_input not found"
+    @assert haskey(kwargs, :integrator_type) "Keyword :integrator_type not found"
+
+    # Unpack the keyword arguments
+    operators = kwargs[:operators]
+    system_input = kwargs[:system_input]
+    integrator_type = kwargs[:integrator_type]
+
+    # Integration settings
+    xdim = length(u0)
+    tdim = length(tdata)
+    u = zeros(xdim, tdim)
+    u[:,1] = u0
+
+    # Adjust input dimensions if system_input is true
+    if system_input
+        A, B = operators
+        input_dim = size(B, 2)  # Number of inputs
+
+        # Adjust the input
+        input = adjust_input(input, input_dim, tdim)
+    else
+        A = operators
+    end
+
+    # Integrate the model
+    if integrator_type == :ForwardEuler
+        if system_input
+            @inbounds for i in 2:tdim
+                Δt = tdata[i] - tdata[i-1]
+                u[:,i] = (I(xdim) + Δt * A) * u[:,i-1] + Δt * B * input[:,i-1]
+            end
+        else
+            @inbounds for i in 2:tdim
+                Δt = tdata[i] - tdata[i-1]
+                u[:,i] = (I(xdim) + Δt * A) * u[:,i-1]
+            end
+        end
+    elseif integrator_type == :BackwardEuler
+        if system_input
+            @inbounds for i in 2:tdim
+                Δt = tdata[i] - tdata[i-1]
+                u[:,i] = (I(xdim) - Δt * A) \ (u[:,i-1] + Δt * B * input[:,i-1])
+            end
+        else
+            @inbounds for i in 2:tdim
+                Δt = tdata[i] - tdata[i-1]
+                u[:,i] = (I(xdim) - Δt * A) \ u[:,i-1]
+            end
+        end
+    elseif integrator_type == :CrankNicolson
+        if system_input
+            @inbounds for i in 2:tdim
+                Δt = tdata[i] - tdata[i-1]
+                u[:,i] = (I(xdim) - 0.5 * Δt * A) \ ((I(xdim) + 0.5 * Δt * A) * u[:,i-1] + 0.5 * Δt * B * (input[:,i-1] + input[:,i]))
+            end
+        else
+            @inbounds for i in 2:tdim
+                Δt = tdata[i] - tdata[i-1]
+                u[:,i] = (I(xdim) - 0.5 * Δt * A) \ ((I(xdim) + 0.5 * Δt * A) * u[:,i-1])
+            end
+        end
+    else
+        error("Integrator type not implemented. Choose from :ForwardEuler, :BackwardEuler, :CrankNicolson")
+    end
+
+    return u
+end
+
+
 end

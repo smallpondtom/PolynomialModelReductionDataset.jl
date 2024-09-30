@@ -1,10 +1,24 @@
 """
+    Gardner PDE model
+"""
+module Gardner 
+
+using DocStringExtensions
+using LinearAlgebra
+using SparseArrays
+using UniqueKronecker
+
+import ..PolynomialModelReductionDataset: AbstractModel
+
+export GardnerModel
+
+"""
 $(TYPEDEF)
 
 Gardner equation model
 
 ```math
-\\frac{\\partial u}{\\partial t} = -\\alpha\\frac{\\partial^2 u}{\\partial x^3} + \beta u\\frac{\\partial u}{\\partial x} + \\gamma u^2\\frac{\\partial u}{\\partial x}
+\\frac{\\partial u}{\\partial t} = -\\alpha\\frac{\\partial^3 u}{\\partial x^3} + \beta u\\frac{\\partial u}{\\partial x} + \\gamma u^2\\frac{\\partial u}{\\partial x}
 ```
 
 ## Fields
@@ -24,7 +38,7 @@ Gardner equation model
 - `finite_diff_model::Function`: model using Finite Difference
 - `integrate_model::Function`: model integration
 """
-mutable struct Garder <: AbstractModel
+mutable struct GardnerModel <: AbstractModel
     # Domains
     spatial_domain::Tuple{Real,Real}  # spatial domain
     time_domain::Tuple{Real,Real}  # temporal domain
@@ -60,7 +74,7 @@ $(SIGNATURES)
 
 Constructor for the Gardner equation model.
 """
-function Garder(;spatial_domain::Tuple{Real,Real}, time_domain::Tuple{Real,Real}, Δx::Real, Δt::Real, 
+function GardnerModel(;spatial_domain::Tuple{Real,Real}, time_domain::Tuple{Real,Real}, Δx::Real, Δt::Real, 
                        params::Dict{Symbol,<:Union{Real,AbstractArray{<:Real}}}, BC::Symbol=:dirichlet)
     # Discritization grid info
     @assert BC ∈ (:periodic, :dirichlet, :neumann, :mixed, :robin, :cauchy, :flux) "Invalid boundary condition"
@@ -80,7 +94,7 @@ function Garder(;spatial_domain::Tuple{Real,Real}, time_domain::Tuple{Real,Real}
     param_dim = Dict([k => length(v) for (k, v) in params])
     param_domain = Dict([k => extrema(v) for (k,v) in params])
 
-    Garder(
+    GardnerModel(
         spatial_domain, time_domain, param_domain,
         Δx, Δt, BC, IC, xspan, tspan, params,
         spatial_dim, time_dim, param_dim,
@@ -101,7 +115,7 @@ Finite Difference Model for Gardner equation
 ## Returns
 - operators
 """
-function finite_diff_model(model::Garder, params::Dict)
+function finite_diff_model(model::GardnerModel, params::Dict)
     if model.BC == :periodic
         return finite_diff_periodic_model(model.spatial_dim, model.Δx, params)
     else
@@ -237,4 +251,6 @@ function integrate_model(ops, tdata, IC)
         state[:, j] = (1.0I(Xdim) - Δt * A) \ (state[:, j-1] + F * state2 * Δt + E * state3 * Δt)
     end
     return state
+end
+
 end

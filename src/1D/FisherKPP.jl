@@ -1,4 +1,19 @@
 """
+    Fisher Kolmogorov-Petrovsky-Piskunov equation (Fisher-KPP) model
+"""
+module FisherKPP
+
+using DocStringExtensions
+using LinearAlgebra
+using SparseArrays
+using UniqueKronecker
+
+import ..PolynomialModelReductionDataset: AbstractModel
+
+export FisherKPPModel
+
+
+"""
 $(TYPEDEF)
 
 Fisher Kolmogorov-Petrovsky-Piskunov equation (Fisher-KPP) model is a reaction-diffusion equation or
@@ -29,7 +44,7 @@ where ``u`` is the state variable, ``D`` is the diffusion coefficient, and ``r``
 - `finite_diff_model::Function`: model using Finite Difference
 - `integrate_model::Function`: integrator using Crank-Nicholson (linear) Explicit (nonlinear) method
 """
-mutable struct FisherKPP <: AbstractModel
+mutable struct FisherKPPModel <: AbstractModel
     # Domains
     spatial_domain::Tuple{Real,Real}  # spatial domain
     time_domain::Tuple{Real,Real}  # temporal domain
@@ -61,7 +76,7 @@ mutable struct FisherKPP <: AbstractModel
 end
 
 
-function FisherKPP(;spatial_domain::Tuple{Real,Real}, time_domain::Tuple{Real,Real}, Δx::Real, Δt::Real, 
+function FisherKPPModel(;spatial_domain::Tuple{Real,Real}, time_domain::Tuple{Real,Real}, Δx::Real, Δt::Real, 
                     diffusion_coeffs::Union{AbstractArray{<:Real},Real}, growth_rates::Union{AbstractArray{<:Real},Real}, 
                     BC::Symbol=:periodic)
     # Discritization grid info
@@ -83,7 +98,7 @@ function FisherKPP(;spatial_domain::Tuple{Real,Real}, time_domain::Tuple{Real,Re
     diffusion_coeff_domain = extrema(diffusion_coeffs)
     growth_rate_domain = extrema(growth_rates)
 
-    FisherKPP(
+    FisherKPPModel(
         spatial_domain, time_domain, diffusion_coeff_domain, growth_rate_domain,
         Δx, Δt, xspan, tspan, spatial_dim, time_dim,
         diffusion_coeffs, growth_rates, param_dim, IC, BC,
@@ -99,12 +114,12 @@ Create the matrices A (linear operator) and F (quadratic operator) for the Fishe
 boundary conditions, the matrices are created differently.
 
 ## Arguments
-- `model::FisherKPP`: Fisher-KPP model
+- `model::FisherKPPModel`: Fisher-KPP model
 - `D::Real`: diffusion coefficients
 - `r::Real`: growth rates
 
 """
-function finite_diff_model(model::FisherKPP, D::Real, r::Real)
+function finite_diff_model(model::FisherKPPModel, D::Real, r::Real)
     if model.BC == :periodic
         return finite_diff_periodic_model(model.spatial_dim, model.Δx, D, r)
     elseif model.BC == :mixed
@@ -311,3 +326,6 @@ end
 #     end
 #     return state
 # end
+
+
+end

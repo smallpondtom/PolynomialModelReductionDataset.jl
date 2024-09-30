@@ -1,4 +1,18 @@
 """
+    Fitz-Hugh Nagumo PDE model
+"""
+module FitzHughNagumo
+
+using DocStringExtensions
+using LinearAlgebra
+using SparseArrays
+
+import ..PolynomialModelReductionDataset: AbstractModel
+
+export FitzHughNagumoModel
+
+
+"""
 $(TYPEDEF)
 
 FitzHugh-Nagumo PDE model
@@ -37,7 +51,7 @@ where ``\\alpha`` and ``\\beta`` are the parameters that are going to be varied 
 - `full_order_model::Function`: full order model
 - `lifted_finite_diff_model::Function`: lifted finite difference model
 """
-mutable struct FitzHughNagumo <: AbstractModel
+mutable struct FitzHughNagumoModel <: AbstractModel
     # Domains
     spatial_domain::Tuple{Real,Real}  # spatial domain
     time_domain::Tuple{Real,Real}  # temporal domain
@@ -72,13 +86,13 @@ end
 
 
 """
-    FitzHughNagumo(;spatial_domain::Tuple{Real,Real}, time_domain::Tuple{Real,Real}, Δx::Real, Δt::Real, 
+    FitzHughNagumoModel(;spatial_domain::Tuple{Real,Real}, time_domain::Tuple{Real,Real}, Δx::Real, Δt::Real, 
                     alpha_input_params::Union{AbstractArray{<:Real},Real}, beta_input_params::Union{AbstractArray{<:Real},Real}, 
-                    BC::Symbol=:neumann) → FitzHughNagumo
+                    BC::Symbol=:neumann) → FitzHughNagumoModel
 
 Constructor FitzHugh-Nagumo PDE model
 """
-function FitzHughNagumo(;spatial_domain::Tuple{Real,Real}, time_domain::Tuple{Real,Real}, Δx::Real, Δt::Real, 
+function FitzHughNagumoModel(;spatial_domain::Tuple{Real,Real}, time_domain::Tuple{Real,Real}, Δx::Real, Δt::Real, 
                     alpha_input_params::Union{AbstractArray{<:Real},Real}, beta_input_params::Union{AbstractArray{<:Real},Real}, 
                     BC::Symbol=:neumann)
     @assert BC ∈ (:periodic, :dirichlet, :neumann, :mixed, :robin, :cauchy, :flux) "Invalid boundary condition"
@@ -100,7 +114,7 @@ function FitzHughNagumo(;spatial_domain::Tuple{Real,Real}, time_domain::Tuple{Re
     alpha_input_param_domain = extrema(alpha_input_params)
     beta_input_param_domain = extrema(beta_input_params)
 
-    FitzHughNagumo(
+    FitzHughNagumoModel(
         spatial_domain, time_domain, 
         alpha_input_param_domain, beta_input_param_domain,
         Δx, Δt, BC, IC, IC_lift, 
@@ -352,4 +366,6 @@ function lifted_finite_diff_model(k, l)
     # H = sparse(symH)
 
     return A, B, C, H, N, K
+end
+
 end

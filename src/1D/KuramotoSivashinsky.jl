@@ -1,4 +1,20 @@
 """
+    Kuramoto-Sivashinsky (KSE) model
+"""
+module KuramotoSivashinsky
+
+using DocStringExtensions
+using FFTW
+using LinearAlgebra
+using SparseArrays
+using UniqueKronecker
+
+import ..PolynomialModelReductionDataset: AbstractModel
+
+export KuramotoSivashinskyModel
+
+
+"""
 $(TYPEDEF)
 
 Kuramoto-Sivashinsky equation PDE model
@@ -33,7 +49,7 @@ where ``u`` is the state variable and ``\\mu`` is the viscosity coefficient.
 - `integrate_model::Function`: integrator
 - `jacobian::Function`: Jacobian matrix
 """
-mutable struct KuramotoSivashinsky <: AbstractModel
+mutable struct KuramotoSivashinskyModel <: AbstractModel
     # Domains
     spatial_domain::Tuple{Real,Real}  # spatial domain
     time_domain::Tuple{Real,Real}  # temporal domain
@@ -83,7 +99,7 @@ $(SIGNATURES)
 
 Constructor for the Kuramoto-Sivashinsky equation model.
 """
-function KuramotoSivashinsky(;spatial_domain::Tuple{Real,Real}, time_domain::Tuple{Real,Real}, Δx::Real, Δt::Real, 
+function KuramotoSivashinskyModel(;spatial_domain::Tuple{Real,Real}, time_domain::Tuple{Real,Real}, Δx::Real, Δt::Real, 
                        diffusion_coeffs::Union{Real,AbstractArray{<:Real}}, BC::Symbol=:periodic,
                        conservation_type::Symbol=:NC, model_type::Symbol=:FD)
     # Discritization grid info
@@ -111,7 +127,7 @@ function KuramotoSivashinsky(;spatial_domain::Tuple{Real,Real}, time_domain::Tup
     @assert model_type ∈ (:FD, :PS, :EWPS, :SG) "Invalid model type"
     integrate_model = integrate_finite_diff_model
 
-    KuramotoSivashinsky(
+    KuramotoSivashinskyModel(
         spatial_domain, time_domain, param_domain,
         Δx, Δt, BC, IC, xspan, tspan, diffusion_coeffs, fourier_modes,
         spatial_dim, time_dim, param_dim, conservation_type, model_type,
@@ -122,7 +138,7 @@ end
 
 
 
-function finite_diff_model(model::KuramotoSivashinsky, μ::Real)
+function finite_diff_model(model::KuramotoSivashinskyModel, μ::Real)
     if model.BC == :periodic
         if model.conservation_type == :NC
             return finite_diff_periodic_nonconservative_model(model.spatial_dim, model.Δx, μ)
@@ -279,7 +295,7 @@ Generate A, F matrices for the Kuramoto-Sivashinsky equation using the Pseudo-Sp
 - `A`: A matrix
 - `F`: F matrix  (take out 1.0im)
 """
-function pseudo_spectral_model(model::KuramotoSivashinsky, μ::Float64)
+function pseudo_spectral_model(model::KuramotoSivashinskyModel, μ::Float64)
     L = model.spatial_domain[2] - model.spatial_domain[1]
 
     # Create A matrix
@@ -310,7 +326,7 @@ Generate A, F matrices for the Kuramoto-Sivashinsky equation using the Fast Four
 - `A`: A matrix
 - `F`: F matrix
 """
-function elementwise_pseudo_spectral_model(model::KuramotoSivashinsky, μ::Float64)
+function elementwise_pseudo_spectral_model(model::KuramotoSivashinskyModel, μ::Float64)
     L = model.spatial_domain[2] - model.spatial_domain[1]
 
     # Create A matrix
@@ -336,7 +352,7 @@ Generate A, F matrices for the Kuramoto-Sivashinsky equation using the Spectral-
 - `A`: A matrix
 - `F`: F matrix
 """
-function spectral_galerkin_model(model::KuramotoSivashinsky, μ::Float64)
+function spectral_galerkin_model(model::KuramotoSivashinskyModel, μ::Float64)
     N = model.spatial_dim
     L = model.spatial_domain[2] - model.spatial_domain[1]
 
@@ -685,4 +701,6 @@ Generate Jacobian matrix
 function jacobian(A::AbstractArray{T}, F::AbstractArray{T}, x::AbstractVector{T}) where {T}
     n = length(x)
     return A + F * elimat(n) * ( kron(1.0I(n), x) + kron(x, 1.0I(n)) )
+end
+
 end

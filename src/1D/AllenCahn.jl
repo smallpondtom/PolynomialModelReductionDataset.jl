@@ -1,4 +1,19 @@
 """
+    Allen-Cahn equation PDE Model
+"""
+module AllenCahn
+
+using DocStringExtensions
+using LinearAlgebra
+using SparseArrays
+using UniqueKronecker
+
+import ..PolynomialModelReductionDataset: AbstractModel
+
+export AllenCahnModel
+
+
+"""
 $(TYPEDEF)
 
     
@@ -25,7 +40,7 @@ where ``u`` is the state variable, ``μ`` is the diffusion coefficient, ``ϵ`` i
 - `finite_diff_model::Function`: model using Finite Difference
 - `integrate_model::Function`: integrator using Crank-Nicholson (linear) Explicit (nonlinear) method
 """
-mutable struct AllenCahn <: AbstractModel
+mutable struct AllenCahnModel <: AbstractModel
     # Domains
     spatial_domain::Tuple{Real,Real}  # spatial domain
     time_domain::Tuple{Real,Real}  # temporal domain
@@ -56,7 +71,7 @@ mutable struct AllenCahn <: AbstractModel
 end
 
 
-function AllenCahn(;spatial_domain::Tuple{Real,Real}, time_domain::Tuple{Real,Real}, Δx::Real, Δt::Real, 
+function AllenCahnModel(;spatial_domain::Tuple{Real,Real}, time_domain::Tuple{Real,Real}, Δx::Real, Δt::Real, 
                     diffusion_coeffs::Union{AbstractArray{<:Real},Real}, nonlin_coeffs::Union{AbstractArray{<:Real},Real},
                     BC::Symbol=:periodic)
     # Discritization grid info
@@ -77,7 +92,7 @@ function AllenCahn(;spatial_domain::Tuple{Real,Real}, time_domain::Tuple{Real,Re
     param_dim = Dict(:diffusion_coeff => length(diffusion_coeffs), :nonlin_coeff => length(nonlin_coeffs))
     param_domain = Dict(:diffusion_coeff => extrema(diffusion_coeffs), :nonlin_coeff => extrema(nonlin_coeffs))
 
-    AllenCahn(
+    AllenCahnModel(
         spatial_domain, time_domain, param_domain,
         Δx, Δt, xspan, tspan, spatial_dim, time_dim,
         diffusion_coeffs, nonlin_coeffs,
@@ -88,7 +103,7 @@ end
 
 
 """
-    finite_diff_model(model::AllenCahn, μ::Real)
+    finite_diff_model(model::AllenCahnModel, μ::Real)
 
 Create the matrices A (linear operator) and E (cubic operator) for the Chafee-Infante model.
 
@@ -97,7 +112,7 @@ Create the matrices A (linear operator) and E (cubic operator) for the Chafee-In
 - `μ::Real`: diffusion coefficient
 - `ϵ::Real`: nonlinear coefficient
 """
-function finite_diff_model(model::AllenCahn, μ::Real, ϵ::Real)
+function finite_diff_model(model::AllenCahnModel, μ::Real, ϵ::Real)
     if model.BC == :periodic
         return finite_diff_periodic_model(model.spatial_dim, model.Δx, μ, ϵ)
     elseif model.BC == :mixed
@@ -107,7 +122,7 @@ end
 
 
 """
-    finite_diff_periodic_model(model::AllenCahn, μ::Real, ϵ::Real)
+    finite_diff_periodic_model(N::Real, Δx::Real, μ::Real, ϵ::Real)
 
 Create the matrices A (linear operator) and E (cubic operator) for the Chafee-Infante model.
 
@@ -136,7 +151,7 @@ end
 
 
 """
-    finite_diff_mixed_model(model::AllenCahn, μ::Real, ϵ::Real)
+    finite_diff_mixed_model(N::Real, Δx::Real, μ::Real, ϵ::Real)
 
 Create the matrices A (linear operator), B (input operator), and E (cubic operator) for Chafee-Infante 
 model using the mixed boundary condition. If the spatial domain is [0,1], then we assume u(0,t) to be 
@@ -269,3 +284,4 @@ function integrate_model(A::AbstractArray{T}, B::AbstractArray{T}, E::AbstractAr
 end
 
 
+end

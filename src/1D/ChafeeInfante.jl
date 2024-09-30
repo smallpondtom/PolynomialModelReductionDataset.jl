@@ -1,4 +1,19 @@
 """
+    Chafee-Infante PDE model
+"""
+module ChafeeInfante
+
+using DocStringExtensions
+using LinearAlgebra
+using SparseArrays
+using UniqueKronecker
+
+import ..PolynomialModelReductionDataset: AbstractModel
+
+export ChafeeInfanteModel
+
+
+"""
 $(TYPEDEF)
 
     
@@ -25,7 +40,7 @@ where ``u`` is the state variable, ``μ`` is the diffusion coefficient.
 - `finite_diff_model::Function`: model using Finite Difference
 - `integrate_model::Function`: integrator using Crank-Nicholson (linear) Explicit (nonlinear) method
 """
-mutable struct ChafeeInfante <: AbstractModel
+mutable struct ChafeeInfanteModel <: AbstractModel
     # Domains
     spatial_domain::Tuple{Real,Real}  # spatial domain
     time_domain::Tuple{Real,Real}  # temporal domain
@@ -56,7 +71,7 @@ mutable struct ChafeeInfante <: AbstractModel
 end
 
 
-function ChafeeInfante(;spatial_domain::Tuple{Real,Real}, time_domain::Tuple{Real,Real}, Δx::Real, Δt::Real, 
+function ChafeeInfanteModel(;spatial_domain::Tuple{Real,Real}, time_domain::Tuple{Real,Real}, Δx::Real, Δt::Real, 
                     diffusion_coeffs::Union{AbstractArray{<:Real},Real}, nonlin_coeffs::Union{AbstractArray{<:Real},Real},
                     BC::Symbol=:periodic)
     # Discritization grid info
@@ -77,7 +92,7 @@ function ChafeeInfante(;spatial_domain::Tuple{Real,Real}, time_domain::Tuple{Rea
     param_dim = Dict(:diffusion_coeff => length(diffusion_coeffs), :nonlin_coeff => length(nonlin_coeffs))
     param_domain = Dict(:diffusion_coeff => extrema(diffusion_coeffs), :nonlin_coeff => extrema(nonlin_coeffs))
 
-    ChafeeInfante(
+    ChafeeInfanteModel(
         spatial_domain, time_domain, param_domain,
         Δx, Δt, xspan, tspan, spatial_dim, time_dim,
         diffusion_coeffs, nonlin_coeffs, param_dim, IC, BC,
@@ -92,10 +107,10 @@ end
 Create the matrices A (linear operator) and E (cubic operator) for the Chafee-Infante model.
 
 ## Arguments
-- `model::ChafeeInfante`: Chafee-Infante model
+- `model::ChafeeInfanteModel`: Chafee-Infante model
 - `μ::Real`: diffusion coefficient
 """
-function finite_diff_model(model::ChafeeInfante, μ::Real, ϵ::Real)
+function finite_diff_model(model::ChafeeInfanteModel, μ::Real, ϵ::Real)
     if model.BC == :periodic
         return finite_diff_periodic_model(model.spatial_dim, model.Δx, μ, ϵ)
     elseif model.BC == :mixed
@@ -298,3 +313,4 @@ function integrate_model(A::AbstractArray{T}, B::AbstractArray{T}, E::AbstractAr
     return state
 end
 
+end
