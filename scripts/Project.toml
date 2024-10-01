@@ -1,5 +1,6 @@
 [deps]
 CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
+Kronecker = "2c470bb0-bcc8-11e8-3dad-c9649493f05e"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 PolynomialModelReductionDataset = "e73a8ff0-27fc-4bea-a65d-4cea79111efd"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"

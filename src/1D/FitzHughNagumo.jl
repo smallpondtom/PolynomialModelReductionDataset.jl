@@ -31,7 +31,7 @@ g(t) = \\alpha t^3 \\exp(-\\beta t)
 ```
 where ``\\alpha`` and ``\\beta`` are the parameters that are going to be varied for training.
 
-## Fields
+# Fields
 - `spatial_domain::Tuple{Real,Real}`: spatial domain
 - `time_domain::Tuple{Real,Real}`: temporal domain
 - `alpha_input_param_domain::Tuple{Real,Real}`: parameter domain
@@ -82,6 +82,7 @@ mutable struct FitzHughNagumoModel <: AbstractModel
 
     full_order_model::Function
     lifted_finite_diff_model::Function
+    integrate_model::Function
 end
 
 
@@ -120,7 +121,8 @@ function FitzHughNagumoModel(;spatial_domain::Tuple{Real,Real}, time_domain::Tup
         Δx, Δt, BC, IC, IC_lift, 
         xspan, tspan, alpha_input_params, beta_input_params,
         spatial_dim, time_dim, param_dim,
-        full_order_model, lifted_finite_diff_model
+        full_order_model, lifted_finite_diff_model,
+        integrate_model
     )
 end
 
@@ -130,11 +132,11 @@ end
 
 Create the full order operators with the nonlinear operator expressed as f(x). 
 
-## Arguments
+# Arguments
 - `k::Int64`: number of spatial grid points
 - `l::Float64`: spatial domain length
 
-## Returns
+# Returns
 - `A::SparseMatrixCSC{Float64,Int64}`: A matrix
 - `B::SparseMatrixCSC{Float64,Int64}`: B matrix
 - `C::SparseMatrixCSC{Float64,Int64}`: C matrix
@@ -226,11 +228,11 @@ end
 
 Generate the full order operators used for the intrusive model operators
 
-## Arguments
+# Arguments
 - `k::Int64`: number of spatial grid points
 - `l::Float64`: spatial domain length
 
-## Returns
+# Returns
 - `A::SparseMatrixCSC{Float64,Int64}`: A matrix
 - `B::SparseMatrixCSC{Float64,Int64}`: B matrix
 - `C::SparseMatrixCSC{Float64,Int64}`: C matrix
@@ -368,4 +370,78 @@ function lifted_finite_diff_model(k, l)
     return A, B, C, H, N, K
 end
 
+
+"""
+$(SIGNATURES)
+
+Integrate the FitzHugh-Nagumo PDE model.
+
+# Arguments
+- `tdata::AbstractVector{T}`: time data
+- `u0::AbstractVector{T}`: initial condition
+- `input::Union{AbstractArray{T},Function}`: input function or matrix
+
+# Keyword Arguments
+- `functional::Function`: functional operator
+
+# Returns
+- `u::Array{T,2}`: state variables
+"""
+function integrate_model(tdata::AbstractVector{T}, u0::AbstractVector{T},
+                         input::Union{AbstractArray{T},Function}=T[]; kwargs...) where {T<:Real}
+    # Check that keyword exists in kwargs
+    @assert haskey(kwargs, :functional) "Keyword :functional not found"
+    # @assert haskey(kwargs, :system_input) "Keyword :system_input not found"
+
+    # Unpack the keyword arguments
+    functional = kwargs[:functional]
+    # system_input = kwargs[:system_input]
+
+    # Integration settings
+    xdim = length(u0)
+    tdim = length(tdata)
+    u = zeros(xdim, tdim)
+    u[:,1] = u0
+
+    # # INFO: Currently we have only implemented the controlled version for this model
+    # # Adjust input dimensions if system_input is true
+    # if system_input
+    #     A, B = operators
+    #     input_dim = size(B, 2)  # Number of inputs
+
+    #     # Adjust the input
+    #     input = adjust_input(input, input_dim, tdim)
+    # else
+    #     A = operators
+    # end
+
+    # # Integrate the model
+    # if system_input
+    #     @inbounds for i in 2:tdim
+    #         Δt = tdata[i] - tdata[i-1]
+    #         u[:,i] = (I(xdim) + Δt * A) * u[:,i-1] + Δt * B * input[:,i-1]
+    #     end
+    # else
+    #     @inbounds for i in 2:tdim
+    #         Δt = tdata[i] - tdata[i-1]
+    #         u[:,i] = (I(xdim) + Δt * A) * u[:,i-1]
+    #     end
+    # end
+
+    if typeof(input) <: AbstractArray
+        @inbounds @views for i in 2:tdim
+            Δt = tdata[i] - tdata[i-1]
+            u[:, i] = u[:, i-1] + Δt * functional(u[:, i-1], input[:,i])
+        end
+    else
+        @inbounds @views for i in 2:tdim
+            Δt = tdata[i] - tdata[i-1]
+            u[:, i] = u[:, i-1] + Δt * functional(u[:, i-1], input(tdata[i]))
+        end
+    end
+
+    return u
 end
+
+end
+

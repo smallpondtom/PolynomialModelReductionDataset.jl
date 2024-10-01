@@ -49,15 +49,19 @@ mutable struct AllenCahnModel <: AbstractModel
     # Discritization grid
     Δx::Real  # spatial grid size
     Δt::Real  # temporal step size
+
+    # Grid points
     xspan::Vector{<:Real}  # spatial grid points
     tspan::Vector{<:Real}  # temporal points
+
+    # Dimensions
     spatial_dim::Int  # spatial dimension
     time_dim::Int  # temporal dimension
+    param_dim::Dict{Symbol,<:Int}  # parameter dimension
 
     # Parameters
     diffusion_coeffs::Union{AbstractArray{<:Real},Real}  # diffusion coefficient
     nonlin_coeffs::Union{AbstractArray{<:Real},Real}  # nonlinear coefficient
-    param_dim::Dict{Symbol,<:Int}  # parameter dimension
 
     # Initial condition
     IC::AbstractArray{<:Real}  # initial condition

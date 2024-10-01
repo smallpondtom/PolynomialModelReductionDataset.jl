@@ -62,6 +62,8 @@ mutable struct BurgersModel <: AbstractModel
     # grid points
     xspan::Vector{Float64}  # spatial grid points
     tspan::Vector{Float64}  # temporal points
+
+    # Parameters
     diffusion_coeffs::Union{Real,AbstractArray{<:Real}}  # parameter vector
 
     # Dimensions
@@ -120,11 +122,11 @@ $(SIGNATURES)
 
 Finite Difference Model for Burgers equation
 
-## Arguments
+# Arguments
 - `model::BurgersModel`: Burgers model
 - `μ::Real`: diffusion coefficient
 
-## Returns
+# Returns
 - operators
 """
 function finite_diff_model(model::BurgersModel, μ::Real; kwargs...)
