@@ -25,7 +25,7 @@ Kuramoto-Sivashinsky equation PDE model
 
 where ``u`` is the state variable and ``\\mu`` is the viscosity coefficient.
 
-## Fields
+# Fields
 - `spatial_domain::Tuple{Real,Real}`: spatial domain
 - `time_domain::Tuple{Real,Real}`: temporal domain
 - `param_domain::Tuple{Real,Real}`: parameter domain
@@ -287,11 +287,11 @@ end
 
 Generate A, F matrices for the Kuramoto-Sivashinsky equation using the Pseudo-Spectral/Fast Fourier Transform method.
 
-## Arguments
+# Arguments
 - `model`: Kuramoto-Sivashinsky equation model
 - `μ`: parameter value
 
-## Returns
+# Returns
 - `A`: A matrix
 - `F`: F matrix  (take out 1.0im)
 """
@@ -318,11 +318,11 @@ end
 
 Generate A, F matrices for the Kuramoto-Sivashinsky equation using the Fast Fourier Transform method (element-wise).
 
-## Arguments
+# Arguments
 - `model`: Kuramoto-Sivashinsky equation model
 - `μ`: parameter value
 
-## Returns
+# Returns
 - `A`: A matrix
 - `F`: F matrix
 """
@@ -344,11 +344,11 @@ end
     
 Generate A, F matrices for the Kuramoto-Sivashinsky equation using the Spectral-Galerkin method.
 
-## Arguments
+# Arguments
 - `model`: Kuramoto-Sivashinsky equation model
 - `μ`: parameter value
 
-## Returns
+# Returns
 - `A`: A matrix
 - `F`: F matrix
 """
@@ -377,7 +377,7 @@ function spectral_galerkin_model(model::KuramotoSivashinskyModel, μ::Float64)
                 end
             end
         end
-        F[Int(k+N/2+1), :] =  vech(foo)
+        F[Int(k+N/2+1), :] =  UniqueKronecker.vech(foo)
     end
 
     # # INFO: Another way to creat F matrix inspired by the convolution operator
@@ -413,59 +413,59 @@ function spectral_galerkin_model(model::KuramotoSivashinskyModel, μ::Float64)
 end
 
 
-"""
-$(SIGNATURES)
+# """
+# $(SIGNATURES)
 
-Integrator using Crank-Nicholson Adams-Bashforth method for (FD)
+# Integrator using Crank-Nicholson Adams-Bashforth method for (FD)
 
-## Arguments
-- `A`: A matrix
-- `F`: F matrix
-- `tdata`: temporal points
-- `IC`: initial condition
-- `const_stepsize`: whether to use a constant time step size
-- `u2_lm1`: u2 at j-2
+# # Arguments
+# - `A`: A matrix
+# - `F`: F matrix
+# - `tdata`: temporal points
+# - `IC`: initial condition
+# - `const_stepsize`: whether to use a constant time step size
+# - `u2_lm1`: u2 at j-2
 
-## Returns
-- `u`: state matrix
-"""
-function integrate_finite_diff_model(A, F, tdata, IC; const_stepsize=true, u2_lm1=nothing)
-    Xdim = length(IC)
-    Tdim = length(tdata)
-    u = zeros(Xdim, Tdim)
-    u[:, 1] = IC
-    # u2_lm1 = Vector{Float64}()  # u2 at j-2 placeholder
+# # Returns
+# - `u`: state matrix
+# """
+# function integrate_finite_diff_model(A, F, tdata, IC; const_stepsize=true, u2_lm1=nothing)
+#     Xdim = length(IC)
+#     Tdim = length(tdata)
+#     u = zeros(Xdim, Tdim)
+#     u[:, 1] = IC
+#     # u2_lm1 = Vector{Float64}()  # u2 at j-2 placeholder
 
-    if const_stepsize
-        Δt = tdata[2] - tdata[1]  # assuming a constant time step size
-        ImdtA_inv = Matrix(1.0I(Xdim) - Δt/2 * A) \ 1.0I(Xdim) # |> sparse
-        IpdtA = (1.0I(Xdim) + Δt/2 * A)
+#     if const_stepsize
+#         Δt = tdata[2] - tdata[1]  # assuming a constant time step size
+#         ImdtA_inv = Matrix(1.0I(Xdim) - Δt/2 * A) \ 1.0I(Xdim) # |> sparse
+#         IpdtA = (1.0I(Xdim) + Δt/2 * A)
 
-        @inbounds for j in 2:Tdim
-            # u2 = vech(u[:, j-1] * u[:, j-1]')
-            u2 = u[:, j-1] ⊘ u[:, j-1]
-            if j == 2 && isnothing(u2_lm1)
-                u[:, j] = ImdtA_inv * (IpdtA * u[:, j-1] + F * u2 * Δt)
-            else
-                u[:, j] = ImdtA_inv * (IpdtA * u[:, j-1] + F * u2 * 3*Δt/2 - F * u2_lm1 * Δt/2)
-            end
-            u2_lm1 = u2
-        end
-    else
-        @inbounds for j in 2:Tdim
-            Δt = tdata[j] - tdata[j-1]
-            # u2 = vech(u[:, j-1] * u[:, j-1]')
-            u2 = u[:, j-1] ⊘ u[:, j-1]
-            if j == 2 && isnothing(u2_lm1)
-                u[:, j] = (1.0I(Xdim) - Δt/2 * A) \ ((1.0I(Xdim) + Δt/2 * A) * u[:, j-1] + F * u2 * Δt)
-            else
-                u[:, j] = (1.0I(Xdim) - Δt/2 * A) \ ((1.0I(Xdim) + Δt/2 * A) * u[:, j-1] + F * u2 * 3*Δt/2 - F * u2_lm1 * Δt/2)
-            end
-            u2_lm1 = u2
-        end
-    end
-    return u
-end
+#         @inbounds for j in 2:Tdim
+#             # u2 = vech(u[:, j-1] * u[:, j-1]')
+#             u2 = u[:, j-1] ⊘ u[:, j-1]
+#             if j == 2 && isnothing(u2_lm1)
+#                 u[:, j] = ImdtA_inv * (IpdtA * u[:, j-1] + F * u2 * Δt)
+#             else
+#                 u[:, j] = ImdtA_inv * (IpdtA * u[:, j-1] + F * u2 * 3*Δt/2 - F * u2_lm1 * Δt/2)
+#             end
+#             u2_lm1 = u2
+#         end
+#     else
+#         @inbounds for j in 2:Tdim
+#             Δt = tdata[j] - tdata[j-1]
+#             # u2 = vech(u[:, j-1] * u[:, j-1]')
+#             u2 = u[:, j-1] ⊘ u[:, j-1]
+#             if j == 2 && isnothing(u2_lm1)
+#                 u[:, j] = (1.0I(Xdim) - Δt/2 * A) \ ((1.0I(Xdim) + Δt/2 * A) * u[:, j-1] + F * u2 * Δt)
+#             else
+#                 u[:, j] = (1.0I(Xdim) - Δt/2 * A) \ ((1.0I(Xdim) + Δt/2 * A) * u[:, j-1] + F * u2 * 3*Δt/2 - F * u2_lm1 * Δt/2)
+#             end
+#             u2_lm1 = u2
+#         end
+#     end
+#     return u
+# end
 
 
 """
@@ -475,28 +475,34 @@ Integrator using Crank-Nicholson Adams-Bashforth method for (FD).
 This is a dispatch function for `integrate_FD(A, F, tdata, IC; const_stepsize=true, u2_lm1=nothing)`.
 Using the operator struct `ops` instead of `A` and `F`.
 
-## Arguments
-- `ops`: Operators
+# Arguments
 - `tdata`: temporal points
 - `IC`: initial condition
-- `params`: keyword arguments
-    - `const_stepsize`: whether to use a constant time step size
 
-## Returns
+# Keyword Arguments
+- `operators`: operators struct
+- `const_stepsize`: whether to use a constant time step size
+- `u2_jm1`: u2 at j-1
+
+# Returns
 - `u`: state matrix
 """
-function integrate_finite_diff_model(ops, tdata, IC; params...)
-    # Unpack the parameters
-    const_stepsize = get(params, :const_stepsize, true)
-
-    A = ops.A
-    F = ops.F
+function integrate_finite_diff_model(tdata, IC, args...; kwargs...)
+    @assert haskey(kwargs, :operators) "Operators are required"
+    @assert haskey(kwargs, :const_stepsize) "Constant step size is required"
+    A, F = kwargs[:operators] 
+    const_stepsize = kwargs[:const_stepsize]
 
     Xdim = length(IC)
     Tdim = length(tdata)
     u = zeros(Xdim, Tdim)
     u[:, 1] = IC
-    u2_lm1 = Vector{Float64}()  # u2 at j-2 placeholder
+
+    if haskey(kwargs, :u2_jm1)
+        u2_jm1 = kwargs[:u2_jm1]
+    else
+        u2_jm1 = nothing
+    end
 
     if const_stepsize
         Δt = tdata[2] - tdata[1]  # assuming a constant time step size
@@ -504,24 +510,24 @@ function integrate_finite_diff_model(ops, tdata, IC; params...)
         IpdtA = (1.0I(Xdim) + Δt/2 * A)
 
         for j in 2:Tdim
-            u2 = vech(u[:, j-1] * u[:, j-1]')
-            if j == 2 
+            u2 = u[:, j-1] ⊘ u[:, j-1]
+            if j == 2 && isnothing(u2_jm1)
                 u[:, j] = ImdtA_inv * (IpdtA * u[:, j-1] + F * u2 * Δt)
             else
-                u[:, j] = ImdtA_inv * (IpdtA * u[:, j-1] + F * u2 * 3*Δt/2 - F * u2_lm1 * Δt/2)
+                u[:, j] = ImdtA_inv * (IpdtA * u[:, j-1] + F * u2 * 3*Δt/2 - F * u2_jm1 * Δt/2)
             end
-            u2_lm1 = u2
+            u2_jm1 = u2
         end
     else
         for j in 2:Tdim
             Δt = tdata[j] - tdata[j-1]
-            u2 = vech(u[:, j-1] * u[:, j-1]')
-            if j == 2
+            u2 = u[:, j-1] ⊘ u[:, j-1]
+            if j == 2 && isnothing(u2_jm1)
                 u[:, j] = (1.0I(Xdim) - Δt/2 * A) \ ((1.0I(Xdim) + Δt/2 * A) * u[:, j-1] + F * u2 * Δt)
             else
-                u[:, j] = (1.0I(Xdim) - Δt/2 * A) \ ((1.0I(Xdim) + Δt/2 * A) * u[:, j-1] + F * u2 * 3*Δt/2 - F * u2_lm1 * Δt/2)
+                u[:, j] = (1.0I(Xdim) - Δt/2 * A) \ ((1.0I(Xdim) + Δt/2 * A) * u[:, j-1] + F * u2 * 3*Δt/2 - F * u2_jm1 * Δt/2)
             end
-            u2_lm1 = u2
+            u2_jm1 = u2
         end
     end
     return u
@@ -534,17 +540,24 @@ $(SIGNATURES)
 
 Integrator using Crank-Nicholson Adams-Bashforth method for (FFT)
 
-## Arguments
-- `A`: A matrix
-- `F`: F matrix
+# Arguments
 - `tdata`: temporal points
 - `IC`: initial condition
 
-## Returns
+# Keyword Arguments
+- `linear_matrix`: linear matrix
+- `quadratic_matrix`: quadratic matrix
+
+# Returns
 - `u`: state matrix
 - `uhat`: state matrix in the Fourier space
 """
-function integrate_pseudo_spectral_model(A, F, tdata, IC)
+function integrate_pseudo_spectral_model(tdata, IC, args...; kwargs...)
+    @assert haskey(kwargs, :linear_matrix) "Linear matrix is required"
+    @assert haskey(kwargs, :quadratic_matrix) "Quadratic matrix is required"
+    A = kwargs[:linear_matrix]
+    F = kwargs[:quadratic_matrix]
+
     Xdim = length(IC)
     Tdim = length(tdata)
     foo = zeros(ComplexF64, Xdim)
@@ -586,17 +599,24 @@ $(SIGNATURES)
 
 Integrator using Crank-Nicholson Adams-Bashforth method for (FFT) (element-wise)
 
-## Arguments
-- `A`: A matrix
-- `F`: F matrix
+# Arguments
 - `tdata`: temporal points
 - `IC`: initial condition
 
-## Returns
+# Keyword Arguments
+- `linear_matrix`: linear matrix
+- `quadratic_matrix`: quadratic matrix
+
+# Returns
 - `u`: state matrix
 - `uhat`: state matrix in the Fourier space
 """
-function integrate_elementwise_pseudo_spectral_model(A, F, tdata, IC)
+function integrate_elementwise_pseudo_spectral_model(tdata, IC, args...; kwargs...)
+    @assert haskey(kwargs, :linear_matrix) "Linear matrix is required"
+    @assert haskey(kwargs, :quadratic_matrix) "Quadratic matrix is required"
+    A = kwargs[:linear_matrix]
+    F = kwargs[:quadratic_matrix]
+
     Xdim = length(IC)
     Tdim = length(tdata)
     foo = zeros(ComplexF64, Xdim)
@@ -637,17 +657,24 @@ $(SIGNATURES)
 
 Integrator for model produced with Spectral-Galerkin method.
 
-## Arguments
-- `A`: A matrix
-- `F`: F matrix
+# Arguments
 - `tdata`: temporal points
 - `IC`: initial condition
 
-## Returns
+# Keyword Arguments
+- `linear_matrix`: linear matrix
+- `quadratic_matrix`: quadratic matrix
+
+# Returns
 - `u`: state matrix
 - `uhat`: state matrix in the Fourier space
 """
-function integrate_spectral_galerkin_model(A, F, tdata, IC)
+function integrate_spectral_galerkin_model(tdata, IC, args...; kwargs...)
+    @assert haskey(kwargs, :linear_matrix) "Linear matrix is required"
+    @assert haskey(kwargs, :quadratic_matrix) "Quadratic matrix is required"
+    A = kwargs[:linear_matrix]
+    F = kwargs[:quadratic_matrix]
+
     Xdim = length(IC)
     Tdim = length(tdata)
     foo = zeros(ComplexF64, Xdim)
@@ -690,17 +717,23 @@ $(SIGNATURES)
 
 Generate Jacobian matrix
 
-## Arguments
-- `A`: linear matrix
-- `F`: nonredundant quadratic matrix
+# Arguments
 - `x`: state
 
-## Returns
+# Keyord Arguments
+- `linear_matrix`: linear matrix
+- `quadratic_matrix`: quadratic matrix
+
+# Returns
 - `J`: Jacobian matrix
 """
-function jacobian(A::AbstractArray{T}, F::AbstractArray{T}, x::AbstractVector{T}) where {T}
+function jacobian(x::AbstractVector{T}; kwargs...) where {T}
     n = length(x)
-    return A + F * elimat(n) * ( kron(1.0I(n), x) + kron(x, 1.0I(n)) )
+    @assert haskey(kwargs, :linear_matrix) "Linear matrix is required"
+    @assert haskey(kwargs, :quadratic_matrix) "Quadratic matrix is required"
+    A = kwargs[:linear_matrix]
+    F = kwargs[:quadratic_matrix]
+    return A + F * elimat(n) * (1.0I(n) ⊛ x)
 end
 
 end
