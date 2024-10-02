@@ -41,7 +41,9 @@ U = kse.integrate_model(kse.tspan, u0, nothing; operators=[A, F], const_stepsize
 #================#
 ## Plot Solution
 #================#
-fig1, _, hm = CairoMakie.heatmap(kse.tspan[1:DS:end], kse.xspan, U[:, 1:DS:end]')
+fig1, ax, hm = CairoMakie.heatmap(kse.tspan[1:DS:end], kse.xspan, U[:, 1:DS:end]')
+ax.xlabel = L"t"
+ax.ylabel = L"x"
 CairoMakie.Colorbar(fig1[1, 2], hm)
 display(fig1)
 
@@ -58,7 +60,9 @@ U, Uhat = kse.integrate_model(kse.tspan, u0, nothing; linear_matrix=A, quadratic
 #================#
 ## Plot Solution
 #================#
-fig2, _, hm = CairoMakie.heatmap(kse.tspan[1:DS:end], kse.xspan, U[:, 1:DS:end]')
+fig2, ax, hm = CairoMakie.heatmap(kse.tspan[1:DS:end], kse.xspan, U[:, 1:DS:end]')
+ax.xlabel = L"t"
+ax.ylabel = L"x"
 CairoMakie.Colorbar(fig2[1, 2], hm)
 display(fig2)
 
@@ -75,7 +79,9 @@ U, Uhat = kse.integrate_model(kse.tspan, u0, nothing; linear_matrix=A, quadratic
 #================#
 ## Plot Solution
 #================#
-fig3, _, hm = CairoMakie.heatmap(kse.tspan[1:DS:end], kse.xspan, U[:, 1:DS:end]')
+fig3, ax, hm = CairoMakie.heatmap(kse.tspan[1:DS:end], kse.xspan, U[:, 1:DS:end]')
+ax.xlabel = L"t"
+ax.ylabel = L"x"
 CairoMakie.Colorbar(fig3[1, 2], hm)
 display(fig3)
 
@@ -92,6 +98,8 @@ U, Uhat = kse.integrate_model(kse.tspan, u0, nothing; linear_matrix=A, quadratic
 #================#
 ## Plot Solution
 #================#
-fig4, _, hm = CairoMakie.heatmap(kse.tspan[1:DS:end], kse.xspan, U[:, 1:DS:end]')
+fig4, ax, hm = CairoMakie.heatmap(kse.tspan[1:DS:end], kse.xspan, U[:, 1:DS:end]')
+ax.xlabel = L"t"
+ax.ylabel = L"x"
 CairoMakie.Colorbar(fig4[1, 2], hm)
 display(fig4)

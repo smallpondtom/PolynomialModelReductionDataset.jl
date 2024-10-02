@@ -39,12 +39,15 @@ U = mKdV.integrate_model(
 ## Plot Solution
 #================#
 # Surface plot
-fig1, _, sf = CairoMakie.surface(mKdV.xspan, mKdV.tspan[1:DS:end], U[:, 1:DS:end], axis=(type=Axis3,))
+fig1, _, sf = CairoMakie.surface(mKdV.xspan, mKdV.tspan[1:DS:end], U[:, 1:DS:end], 
+    axis=(type=Axis3, xlabel=L"x", ylabel=L"t", zlabel=L"u(x,t)"))
 CairoMakie.Colorbar(fig1[1, 2], sf)
 display(fig1)
 
 # Flow field
-fig2, _, hm = CairoMakie.heatmap(mKdV.xspan, mKdV.tspan[1:DS:end], U[:, 1:DS:end])
+fig2, ax, hm = CairoMakie.heatmap(mKdV.xspan, mKdV.tspan[1:DS:end], U[:, 1:DS:end])
+ax.xlabel = L"x"
+ax.ylabel = L"t"
 CairoMakie.Colorbar(fig2[1, 2], hm)
 display(fig2)
 
@@ -81,11 +84,14 @@ U = mKdV.integrate_model(
 ## Plot Solution
 #================#
 # Surface plot
-fig3, _, sf = CairoMakie.surface(mKdV.xspan, mKdV.tspan[1:DS:end], U[:, 1:DS:end], axis=(type=Axis3,))
+fig3, _, sf = CairoMakie.surface(mKdV.xspan, mKdV.tspan[1:DS:end], U[:, 1:DS:end], 
+    axis=(type=Axis3, xlabel=L"x", ylabel=L"t", zlabel=L"u(x,t)"))
 CairoMakie.Colorbar(fig3[1, 2], sf)
 display(fig3)
 
 # Flow field
-fig4, _, hm = CairoMakie.heatmap(mKdV.xspan, mKdV.tspan[1:DS:end], U[:, 1:DS:end])
+fig4, ax, hm = CairoMakie.heatmap(mKdV.xspan, mKdV.tspan[1:DS:end], U[:, 1:DS:end])
+ax.xlabel = L"x"
+ax.ylabel = L"t"
 CairoMakie.Colorbar(fig4[1, 2], hm)
 display(fig4)

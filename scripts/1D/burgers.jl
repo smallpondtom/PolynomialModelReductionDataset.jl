@@ -38,12 +38,15 @@ U = burgers.integrate_model(
 ## Plot Solution
 #================#
 # Surface plot
-fig1, _, sf = CairoMakie.surface(burgers.xspan, burgers.tspan, U, axis=(type=Axis3,))
+fig1, _, sf = CairoMakie.surface(burgers.xspan, burgers.tspan, U, 
+    axis=(type=Axis3, xlabel=L"x", ylabel=L"t", zlabel=L"u(x,t)"))
 CairoMakie.Colorbar(fig1[1, 2], sf)
 display(fig1)
 
 # Flow field
-fig2, _, hm = CairoMakie.heatmap(burgers.xspan, burgers.tspan, U)
+fig2, ax, hm = CairoMakie.heatmap(burgers.xspan, burgers.tspan, U)
+ax.xlabel = L"x"
+ax.ylabel = L"t"
 CairoMakie.Colorbar(fig2[1, 2], hm)
 display(fig2)
 
@@ -75,12 +78,15 @@ U = burgers.integrate_model(
 ## Plot Solution
 #================#
 # Surface plot
-fig3, _, sf = CairoMakie.surface(burgers.xspan, burgers.tspan, U, axis=(type=Axis3,))
+fig3, _, sf = CairoMakie.surface(burgers.xspan, burgers.tspan, U, 
+    axis=(type=Axis3, xlabel=L"x", ylabel=L"t", zlabel=L"u(x,t)"))
 CairoMakie.Colorbar(fig3[1, 2], sf)
 display(fig3)
 
 # Flow field
-fig4, _, hm = CairoMakie.heatmap(burgers.xspan, burgers.tspan, U)
+fig4, ax, hm = CairoMakie.heatmap(burgers.xspan, burgers.tspan, U)
+ax.xlabel = L"x"
+ax.ylabel = L"t"
 CairoMakie.Colorbar(fig4[1, 2], hm)
 display(fig4)
 
@@ -112,12 +118,15 @@ U = burgers.integrate_model(
 ## Plot Solution
 #================#
 # Surface plot
-fig5, _, sf = CairoMakie.surface(burgers.xspan, burgers.tspan, U, axis=(type=Axis3,))
+fig5, _, sf = CairoMakie.surface(burgers.xspan, burgers.tspan, U, 
+    axis=(type=Axis3, xlabel=L"x", ylabel=L"t", zlabel=L"u(x,t)"))
 CairoMakie.Colorbar(fig5[1, 2], sf)
 display(fig5)
 
 # Flow field
-fig6, _, hm = CairoMakie.heatmap(burgers.xspan, burgers.tspan, U)
+fig6, ax, hm = CairoMakie.heatmap(burgers.xspan, burgers.tspan, U)
+ax.xlabel = L"x"
+ax.ylabel = L"t"
 CairoMakie.Colorbar(fig6[1, 2], hm)
 display(fig6)
 
@@ -149,11 +158,14 @@ U = burgers.integrate_model(
 ## Plot Solution
 #================#
 # Surface plot
-fig7, _, sf = CairoMakie.surface(burgers.xspan, burgers.tspan, U, axis=(type=Axis3,))
+fig7, _, sf = CairoMakie.surface(burgers.xspan, burgers.tspan, U, 
+    axis=(type=Axis3, xlabel=L"x", ylabel=L"t", zlabel=L"u(x,t)"))
 CairoMakie.Colorbar(fig7[1, 2], sf)
 display(fig7)
 
-# Flow field
-fig8, _, hm = CairoMakie.heatmap(burgers.xspan, burgers.tspan, U)
+## Flow field
+fig8, ax, hm = CairoMakie.heatmap(burgers.xspan, burgers.tspan, U)
+ax.xlabel = L"x"
+ax.ylabel = L"t"
 CairoMakie.Colorbar(fig8[1, 2], hm)
 display(fig8)
