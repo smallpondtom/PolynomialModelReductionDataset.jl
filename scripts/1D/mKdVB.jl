@@ -1,5 +1,5 @@
 """
-Modified Kortweg-de Vries Equation Example
+Modified Kortweg-de Vries-Burgers Equation Example
 """
 
 #===========#
@@ -7,16 +7,16 @@ Modified Kortweg-de Vries Equation Example
 #===========#
 using CairoMakie
 using LinearAlgebra
-using PolynomialModelReductionDataset: ModifiedKortewegDeVriesModel
+using PolynomialModelReductionDataset: ModifiedKortewegDeVriesBurgersModel
 
 #======================#
 ## Model (Periodic BC)
 #======================#
 Ω = (0.0, 3.0)
 Nx = 2^8; dt = 1e-3
-mKdV = ModifiedKortewegDeVriesModel(
+mKdV = ModifiedKortewegDeVriesBurgersModel(
     spatial_domain=Ω, time_domain=(0.0, 3.0), Δx=(Ω[2] + 1/Nx)/Nx, Δt=dt,
-    params=Dict(:a => 1, :b => 3), BC=:periodic,
+    params=Dict(:a => 1, :b => 3, :c => 0.1), BC=:periodic,
 )
 DS = 100
 mKdV.IC = 2 * cos.(2π * mKdV.xspan / (Ω[2] - Ω[1])) # + 0.5 * cos.(4π * mKdV.xspan / (Ω[2] - Ω[1]))
@@ -53,9 +53,9 @@ display(fig2)
 #=======================#
 Ω = (0.0, 3.0)
 Nx = 2^8; dt = 1e-3
-mKdV = ModifiedKortewegDeVriesModel(
+mKdV = ModifiedKortewegDeVriesBurgersModel(
     spatial_domain=Ω, time_domain=(0.0, 3.0), Δx=(Ω[2] + 1/Nx)/Nx, Δt=dt,
-    params=Dict(:a => 1, :b => 3), BC=:dirichlet,
+    params=Dict(:a => 1, :b => 3, :c=> 0.1), BC=:dirichlet,
 )
 DS = 100
 mKdV.IC = 2 * cos.(2π * mKdV.xspan / (Ω[2] - Ω[1])) # + 0.5 * cos.(4π * mKdV.xspan / (Ω[2] - Ω[1]))
