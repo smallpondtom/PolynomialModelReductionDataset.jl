@@ -1275,7 +1275,7 @@ version = "0.4.1"
 
 [[deps.UniqueKronecker]]
 deps = ["Combinatorics", "Kronecker", "LinearAlgebra", "SparseArrays", "StatsBase"]
-git-tree-sha1 = "6e0e59cf030ff08603780c7595a52748e1e68014"
+path = "../../UniqueKronecker.jl"
 uuid = "dd29a912-d12a-442e-ae57-6933397c0393"
 version = "0.1.0"
 

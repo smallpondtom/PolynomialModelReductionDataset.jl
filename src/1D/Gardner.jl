@@ -109,7 +109,7 @@ $(SIGNATURES)
 Finite Difference Model for Gardner equation
 
 ## Arguments
-- `model::Garder`: Gardner model
+- `model::GarderModel`: Gardner model
 - `params::Real`: params including a, b, c
 
 ## Returns
@@ -179,7 +179,7 @@ function finite_diff_periodic_model(N::Real, Δx::Real, params::Dict)
     push!(indices, (N-1,N,N,N))
     push!(indices, (N,N,1,N))
     values = γ / 2 / Δx * ones(length(indices))
-    E = makeCubicOp(N, indices, values, which_cubic_term='E')
+    E = makePolyOp(N, indices, values; nonredundant=true)
 
     return A, F, E
 end

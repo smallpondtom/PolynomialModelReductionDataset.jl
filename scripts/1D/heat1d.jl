@@ -45,7 +45,7 @@ U = heat1d.integrate_model(
 ## Plot Solution
 #================#
 # Surface plot
-fig1, _, sf = CairoMakie.surface(heat1d.xspan, heat1d.tspan, U)
+fig1, _, sf = CairoMakie.surface(heat1d.xspan, heat1d.tspan, U, axis=(type=Axis3,))
 CairoMakie.Colorbar(fig1[1, 2], sf)
 display(fig1)
 
@@ -66,7 +66,7 @@ U = heat1d.integrate_model(
 ## Plot Solution
 #================#
 # Surface plot
-fig3, _, sf = CairoMakie.surface(heat1d.xspan, heat1d.tspan, U)
+fig3, _, sf = CairoMakie.surface(heat1d.xspan, heat1d.tspan, U, axis=(type=Axis3,))
 CairoMakie.Colorbar(fig3[1, 2], sf)
 display(fig3)
 

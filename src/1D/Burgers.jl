@@ -175,11 +175,11 @@ function finite_diff_dirichlet_model(N::Real, Δx::Real, Δt::Real, μ::Float64;
 
     # Create B matrix
     if same_on_both_ends
-        B = [1; zeros(N - 2, 1); 1] ./ Δt
+        B = sparse([1; zeros(N - 2, 1); 1]) ./ Δt
     elseif opposite_sign_on_ends
-        B = [1; zeros(N - 2, 1); -1] ./ Δt
+        B = sparse([1; zeros(N - 2, 1); -1]) ./ Δt
     else
-        B = zeros(N,2)
+        B = spzeros(N,2)
         B[1,1] = 1 / Δt
         B[end,2] = 1 / Δt
     end

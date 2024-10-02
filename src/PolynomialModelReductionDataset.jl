@@ -28,6 +28,7 @@ include("1D/FitzHughNagumo.jl")
 include("1D/Gardner.jl")
 include("1D/Heat1D.jl")
 include("1D/KuramotoSivashinsky.jl")
+include("1D/ModifiedKortewegDeVries.jl")
 using .AllenCahn: AllenCahnModel
 using .Burgers: BurgersModel
 using .ChafeeInfante: ChafeeInfanteModel
@@ -36,6 +37,7 @@ using .FisherKPP: FisherKPPModel
 using .FitzHughNagumo: FitzHughNagumoModel
 using .Gardner: GardnerModel
 using .KuramotoSivashinsky: KuramotoSivashinskyModel
+using .ModifiedKortewegDeVries: ModifiedKortewegDeVriesModel
 
 # 2D models
 include("2D/Heat2D.jl")

@@ -38,7 +38,7 @@ U = burgers.integrate_model(
 ## Plot Solution
 #================#
 # Surface plot
-fig1, _, sf = CairoMakie.surface(burgers.xspan, burgers.tspan, U)
+fig1, _, sf = CairoMakie.surface(burgers.xspan, burgers.tspan, U, axis=(type=Axis3,))
 CairoMakie.Colorbar(fig1[1, 2], sf)
 display(fig1)
 
@@ -75,7 +75,7 @@ U = burgers.integrate_model(
 ## Plot Solution
 #================#
 # Surface plot
-fig3, _, sf = CairoMakie.surface(burgers.xspan, burgers.tspan, U)
+fig3, _, sf = CairoMakie.surface(burgers.xspan, burgers.tspan, U, axis=(type=Axis3,))
 CairoMakie.Colorbar(fig3[1, 2], sf)
 display(fig3)
 
@@ -112,7 +112,7 @@ U = burgers.integrate_model(
 ## Plot Solution
 #================#
 # Surface plot
-fig5, _, sf = CairoMakie.surface(burgers.xspan, burgers.tspan, U)
+fig5, _, sf = CairoMakie.surface(burgers.xspan, burgers.tspan, U, axis=(type=Axis3,))
 CairoMakie.Colorbar(fig5[1, 2], sf)
 display(fig5)
 
@@ -149,7 +149,7 @@ U = burgers.integrate_model(
 ## Plot Solution
 #================#
 # Surface plot
-fig7, _, sf = CairoMakie.surface(burgers.xspan, burgers.tspan, U)
+fig7, _, sf = CairoMakie.surface(burgers.xspan, burgers.tspan, U, axis=(type=Axis3,))
 CairoMakie.Colorbar(fig7[1, 2], sf)
 display(fig7)
 
