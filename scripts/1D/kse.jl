@@ -41,11 +41,18 @@ U = kse.integrate_model(kse.tspan, u0, nothing; operators=[A, F], const_stepsize
 #================#
 ## Plot Solution
 #================#
+# Heatmap
 fig1, ax, hm = CairoMakie.heatmap(kse.tspan[1:DS:end], kse.xspan, U[:, 1:DS:end]')
 ax.xlabel = L"t"
 ax.ylabel = L"x"
 CairoMakie.Colorbar(fig1[1, 2], hm)
 display(fig1)
+
+# Surface plot
+fig11, _, sf = CairoMakie.surface(kse.xspan, kse.tspan[1:DS:end], U[:, 1:DS:end], 
+    axis=(type=Axis3, xlabel=L"x", ylabel=L"t", zlabel=L"u(x,t)"))
+CairoMakie.Colorbar(fig1[1, 2], sf)
+display(fig11)
 
 #============================#
 ## Pseudo-Spectral Operators
