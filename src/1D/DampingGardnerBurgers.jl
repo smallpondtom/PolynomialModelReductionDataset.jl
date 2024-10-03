@@ -1,7 +1,7 @@
 """
-    Modified Korteweg-de Vries-Burgers (mKdVB) equation
+    Damping Gardner-Burgers (DGB) PDE model
 """
-module ModifiedKortewegDeVriesBurgers
+module DampingGardnerBurgers
 
 using DocStringExtensions
 using LinearAlgebra
@@ -10,15 +10,15 @@ using UniqueKronecker
 
 import ..PolynomialModelReductionDataset: AbstractModel, adjust_input
 
-export ModifiedKortewegDeVriesBurgersModel
+export DampingGardnerBurgersModel
 
 """
 $(TYPEDEF)
 
-Modified Korteweg-de Vries-Burgers equation model
+Gardner equation model
 
 ```math
-\\frac{\\partial u}{\\partial t} = -\\alpha\\frac{\\partial^3 u}{\\partial x^3} - \beta u^2\\frac{\\partial u}{\\partial x} + \\gamma\\frac{\\partial^2 u}{\\partial x^2}
+\\frac{\\partial u}{\\partial t} = -\\alpha\\frac{\\partial^3 u}{\\partial x^3} + \beta u\\frac{\\partial u}{\\partial x} + \\gamma u^2\\frac{\\partial u}{\\partial x} + \\delta \\frac{\\partial^2 u}{\\partial x^2} + \\epsilon u
 ```
 
 ## Fields
@@ -38,7 +38,7 @@ Modified Korteweg-de Vries-Burgers equation model
 - `finite_diff_model::Function`: model using Finite Difference
 - `integrate_model::Function`: model integration
 """
-mutable struct ModifiedKortewegDeVriesBurgersModel <: AbstractModel
+mutable struct DampingGardnerBurgersModel <: AbstractModel
     # Domains
     spatial_domain::Tuple{Real,Real}  # spatial domain
     time_domain::Tuple{Real,Real}  # temporal domain
@@ -72,9 +72,9 @@ end
 """
 $(SIGNATURES)
 
-Constructor for the mKdV equation model.
+Constructor for the Gardner equation model.
 """
-function ModifiedKortewegDeVriesBurgersModel(;spatial_domain::Tuple{Real,Real}, time_domain::Tuple{Real,Real}, Δx::Real, Δt::Real, 
+function DampingGardnerBurgersModel(;spatial_domain::Tuple{Real,Real}, time_domain::Tuple{Real,Real}, Δx::Real, Δt::Real, 
                        params::Dict{Symbol,<:Union{Real,AbstractArray{<:Real}}}, BC::Symbol=:dirichlet)
     # Discritization grid info
     @assert BC ∈ (:periodic, :dirichlet, :neumann, :mixed, :robin, :cauchy, :flux) "Invalid boundary condition"
@@ -94,7 +94,7 @@ function ModifiedKortewegDeVriesBurgersModel(;spatial_domain::Tuple{Real,Real}, 
     param_dim = Dict([k => length(v) for (k, v) in params])
     param_domain = Dict([k => extrema(v) for (k,v) in params])
 
-    ModifiedKortewegDeVriesBurgersModel(
+    DampingGardnerBurgersModel(
         spatial_domain, time_domain, param_domain,
         Δx, Δt, BC, IC, xspan, tspan, params,
         spatial_dim, time_dim, param_dim,
@@ -106,16 +106,16 @@ end
 """
 $(SIGNATURES)
 
-Finite Difference Model for mKdV equation
+Finite Difference Model for Gardner equation
 
 ## Arguments
-- `model::ModifiedKortewegDeVriesBurgersModel`: mKdV model
+- `model::DampingGardnerBurgersModel`: Gardner model
 - `params::Real`: params including a, b, c
 
 ## Returns
 - operators
 """
-function finite_diff_model(model::ModifiedKortewegDeVriesBurgersModel, params::Dict)
+function finite_diff_model(model::DampingGardnerBurgersModel, params::Dict)
     if model.BC == :periodic
         return finite_diff_periodic_model(model.spatial_dim, model.Δx, params)
     elseif model.BC == :dirichlet
@@ -126,25 +126,43 @@ function finite_diff_model(model::ModifiedKortewegDeVriesBurgersModel, params::D
 end
 
 
-function finite_diff_dirichlet_model(N::Real, Δx::Real, Δt::Real, params::Dict)
-    @assert N >= 2 "N should be greater than or equal to 2"
+"""
+$(SIGNATURES)
 
+Generate A, F, E, B matrices for the Gardner equation for Dirichlet boundary condition.
+"""
+function finite_diff_dirichlet_model(N::Real, Δx::Real, Δt::Real, params::Dict)
     # Create A matrix
     α = params[:a]
     β = params[:b]
     γ = params[:c]
+    δ = params[:d]
+    ϵ = params[:e]
 
     A = spdiagm(
         -2 => (0.5 * α / Δx^3) * ones(N - 2),
-        -1 => (γ / Δx^2 - α / Δx^3) * ones(N - 1),
-        0 => (-2 * γ / Δx^2) * ones(N),
-        1 => (α / Δx^3 + γ / Δx^2) * ones(N - 1), 
+        -1 => (δ / Δx^2 - α / Δx^3) * ones(N - 1),
+        0 => (ϵ -2 * δ / Δx^2) * ones(N),
+        1 => (α / Δx^3 + δ / Δx^2) * ones(N - 1), 
         2 => (-0.5 * α / Δx^3) * ones(N - 2)
     )
     A[1, 1:3] = [-1/Δt, 0, 0]
     A[2, 1:4] = [0, -1/Δt, 0, 0]
     A[end-1, end-3:end] = [0, 0, -1/Δt, 0]
     A[end, end-2:end] = [0, 0, -1/Δt]
+
+    # Create F matrix
+    S = Int(N * (N + 1) / 2)
+    if N >= 3
+        Fval = repeat([1.0, -1.0], outer=N - 2)
+        row_i = repeat(2:(N-1), inner=2)
+        seq = Int.([2 + (N + 1) * (x - 1) - x * (x - 1) / 2 for x in 1:(N-1)])
+        col_i = vcat(seq[1], repeat(seq[2:end-1], inner=2), seq[end])
+        F = sparse(row_i, col_i, Fval, N, S) / 2 / Δx
+    else
+        F = zeros(N, S)
+    end
+    F *= β
 
     # Create E matrix
     S = Int(N * (N + 1) * (N + 2) / 6)
@@ -156,7 +174,7 @@ function finite_diff_dirichlet_model(N::Real, Δx::Real, Δt::Real, params::Dict
         jjjp = cubic_idx[3:end-2] .+ 1
         jjjm = cubic_idx[2:end-3] + range(N-1, step=-1, stop=4)
         jjj = reshape([jjjm'; jjjp'], 2N-8)
-        vvv = reshape([ones(1,N-4); -ones(1,N-4)], 2N-8) * β / 2 / Δx
+        vvv = reshape([ones(1,N-4); -ones(1,N-4)], 2N-8) * γ / 2 / Δx
         E = sparse(iii, jjj, vvv, N, S)
     else 
         E = spzeros(N, S)
@@ -169,63 +187,67 @@ function finite_diff_dirichlet_model(N::Real, Δx::Real, Δt::Real, params::Dict
     B[end,2] = 1 / Δt
     B[end-1,2] = 1 / Δt
 
-    return A, E, B
+    return A, F, E, B
 end
 
 
-
 """
-    finite_diff_periodic_model(N::Real, Δx::Real, params::Dict) → A, E
+    finite_diff_periodic_model(N::Real, Δx::Real, params::Dict) → A, F, E
 
-Generate A and E matrices for the Gardner equation for periodic boundary condition (Non-conservative).
+Generate A, F, E matrices for the Gardner equation for periodic boundary condition (Non-conservative).
 """
 function finite_diff_periodic_model(N::Real, Δx::Real, params::Dict)
-    @assert N >= 2 "N should be greater than or equal to 2"
-
     # Create A matrix
     α = params[:a]
     β = params[:b]
     γ = params[:c]
+    δ = params[:d]
+    ϵ = params[:e]
 
     A = spdiagm(
         -2 => (0.5 * α / Δx^3) * ones(N - 2),
-        -1 => (γ / Δx^2 - α / Δx^3) * ones(N - 1),
-        0 => (-2 * γ / Δx^2) * ones(N),
-        1 => (α / Δx^3 + γ / Δx^2) * ones(N - 1), 
+        -1 => (δ / Δx^2 - α / Δx^3) * ones(N - 1),
+        0 => (ϵ -2 * δ / Δx^2) * ones(N),
+        1 => (α / Δx^3 + δ / Δx^2) * ones(N - 1), 
         2 => (-0.5 * α / Δx^3) * ones(N - 2)
     )
     # Periodic boundary condition
     A[1, end-1] = 0.5 * α / Δx^3
-    A[1, end] = γ / Δx^2 - α / Δx^3 
+    A[1, end] = δ / Δx^2 - α / Δx^3 
     A[2, end] = 0.5 * α / Δx^3
     A[end-1, 1] = -0.5 * α / Δx^3
-    A[end, 1] = α / Δx^3 + γ / Δx^2
+    A[end, 1] = α / Δx^3 + δ / Δx^2
     A[end, 2] = -0.5 * α / Δx^3
 
-    # Create E matrix
-    # THIS IS TOO SLOW
-    # indices = NTuple{4,<:Int}[]
-    # for i in 2:N-1
-    #     push!(indices, (i, i, i+1, i))
-    #     push!(indices, (i-1, i, i, i))
-    # end
-    # push!(indices, (1,1,2,1))
-    # push!(indices, (N,1,1,1))
-    # push!(indices, (N-1,N,N,N))
-    # push!(indices, (N,N,1,N))
-    # values = β / 2 / Δx * ones(length(indices))
-    # E = makePolyOp_parallel(N, indices, values; nonredundant=true, symmetric=false)
+    # Create F matrix
+    S = Int(N * (N + 1) / 2)
+    if N >= 3
+        Fval = repeat([1.0, -1.0], outer=N - 2)
+        row_i = repeat(2:(N-1), inner=2)
+        seq = Int.([2 + (N + 1) * (x - 1) - x * (x - 1) / 2 for x in 1:(N-1)])
+        col_i = vcat(seq[1], repeat(seq[2:end-1], inner=2), seq[end])
+        F = sparse(row_i, col_i, Fval, N, S) / 2 / Δx
 
+        F[1, 2] = - 1 / 2 / Δx
+        F[1, N] = 1 / 2 / Δx
+        F[N, N] = - 1 / 2 / Δx
+        F[N, end-1] = 1 / 2 / Δx 
+    else
+        F = zeros(N, S)
+    end
+    F *= β
+
+    # Create E matrix
     S = Int(N * (N + 1) * (N + 2) / 6)
     if N >= 3
         cubic_idx_diff = reverse([Int(3 + 2*(i-1) + 0.5*i*(i-1)) for i in 1:N-1])
         pushfirst!(cubic_idx_diff, 1)
         cubic_idx = cumsum(cubic_idx_diff)
-        iii = repeat(2:(N-1), inner=2)
-        jjjp = cubic_idx[2:end-1] .+ 1
-        jjjm = cubic_idx[1:end-2] + range(N, step=-1, stop=3)
-        jjj = reshape([jjjm'; jjjp'], 2N-4)
-        vvv = reshape([ones(1,N-2); -ones(1,N-2)], 2N-4) * β / 2 / Δx
+        iii = repeat(3:(N-2), inner=2)
+        jjjp = cubic_idx[3:end-2] .+ 1
+        jjjm = cubic_idx[2:end-3] + range(N-1, step=-1, stop=4)
+        jjj = reshape([jjjm'; jjjp'], 2N-8)
+        vvv = reshape([ones(1,N-4); -ones(1,N-4)], 2N-8) * γ / 2 / Δx
         E = sparse(iii, jjj, vvv, N, S)
     else 
         E = spzeros(N, S)
@@ -236,29 +258,32 @@ function finite_diff_periodic_model(N::Real, Δx::Real, params::Dict)
     E[N,end-1] = β / 2 / Δx  # x_N^2 x_{N-1}
     E[N,Int(N*(N+1)÷2)] = -β / 2 / Δx  # x_N x_1^2
 
-    return A, E
+    return A, F, E
 end
 
 
 """
 $(SIGNATURES)
 
-Semi-Implicit Euler (SIE) scheme with control
+Semi-Implicit Euler scheme with control
 """
-function integrate_model_with_control_SIE(tdata, u0, input; linear_matrix, cubic_matrix, control_matrix)
+function integrate_model_with_control(tdata, u0, input; linear_matrix, quadratic_matrix, 
+                                      cubic_matrix, control_matrix)
     xdim = length(u0)
     tdim = length(tdata)
     u = zeros(xdim, tdim)
     u[:, 1] = u0
 
     A = linear_matrix
+    F = quadratic_matrix
     E = cubic_matrix
     B = control_matrix
 
     for j in 2:tdim
         Δt = tdata[j] - tdata[j-1]
-        u3 = ⊘(u[:, j-1], u[:, j-1], u[:, j-1])
-        u[:, j] = (1.0I(xdim) - Δt * A) \ (u[:, j-1] + E * u3 * Δt + B * input[j-1] * Δt)
+        u2 = u[:, j-1] ⊘ u[:, j-1]
+        u3 = ⊘(u[:, j-1], 3)
+        u[:, j] = (1.0I(xdim) - Δt * A) \ (u[:, j-1] + F * u2 * Δt + E * u3 * Δt + B * input[j-1] * Δt)
     end
     return u
 end
@@ -269,10 +294,11 @@ $(SIGNATURES)
 
 Crank-Nicolson Adam-Bashforth (CNAB) scheme with control
 """
-function integrate_model_with_control_CNAB(tdata, u0, input; linear_matrix, cubic_matrix, control_matrix, 
-                                           const_stepsize=false, u3_jm1=nothing)
+function integrate_model_with_control_CNAB(tdata, u0, input; linear_matrix, quadratic_matrix, cubic_matrix, 
+                                           control_matrix, const_stepsize=false, u2_jm1=nothing, u3_jm1=nothing)
     # Unpack matrices
     A = linear_matrix
+    F = quadratic_matrix
     B = control_matrix
     E = cubic_matrix
 
@@ -291,23 +317,34 @@ function integrate_model_with_control_CNAB(tdata, u0, input; linear_matrix, cubi
         IpdtA = (1.0I(xdim) + Δt/2 * A)
 
         for j in 2:tdim
+            u2 = ⊘(u[:, j-1], 2)
             u3 = ⊘(u[:, j-1], 3)
-            if j == 2 && isnothing(u3_jm1)
-                u[:, j] = ImdtA_inv * (IpdtA * u[:, j-1] + E * u3 * Δt + 0.5 * Δt * B * (input[:,j-1] + input[:,j]))
+            if j == 2 && (isnothing(u3_jm1) || isnothing(u2_jm1))
+                u[:, j] = ImdtA_inv * (IpdtA * u[:, j-1] + F * u2 * Δt +  E * u3 * Δt + 0.5 * Δt * B * (input[:,j-1] + input[:,j]))
             else
-                u[:, j] = ImdtA_inv * (IpdtA * u[:, j-1] + E * u3 * 3*Δt/2 - E * u3_jm1 * Δt/2 + 0.5 * Δt * B * (input[:,j-1] + input[:,j]))
+                u[:, j] = ImdtA_inv * (IpdtA * u[:, j-1] + 
+                                       F * u2 * 3*Δt/2 - F * u2_jm1 * Δt/2 +
+                                       E * u3 * 3*Δt/2 - E * u3_jm1 * Δt/2 + 
+                                       0.5 * Δt * B * (input[:,j-1] + input[:,j]))
             end
+            u2_jm1 = u2
             u3_jm1 = u3
         end
     else
         for j in 2:tdim
             Δt = tdata[j] - tdata[j-1]
+            u2 = ⊘(u[:, j-1], 2)
             u3 = ⊘(u[:, j-1], 3)
             if j == 2 && isnothing(u3_jm1)
-                u[:, j] = (1.0I(xdim) - Δt/2 * A) \ ((1.0I(xdim) + Δt/2 * A) * u[:, j-1] + E * u3 * Δt + 0.5 * Δt * B * (input[:,j-1] + input[:,j]))
+                u[:, j] = (1.0I(xdim) - Δt/2 * A) \ ((1.0I(xdim) + Δt/2 * A) * u[:, j-1] + 
+                                                     F * u2 * Δt + E * u3 * Δt + 0.5 * Δt * B * (input[:,j-1] + input[:,j]))
             else
-                u[:, j] = (1.0I(xdim) - Δt/2 * A) \ ((1.0I(xdim) + Δt/2 * A) * u[:, j-1] + E * u3 * 3*Δt/2 - E * u3_jm1 * Δt/2 + 0.5 * Δt * B * (input[:,j-1] + input[:,j]))
+                u[:, j] = (1.0I(xdim) - Δt/2 * A) \ ((1.0I(xdim) + Δt/2 * A) * u[:, j-1] + 
+                                                     F * u2 * 3*Δt/2 - F * u2_jm1 * Δt/2 +
+                                                     E * u3 * 3*Δt/2 - E * u3_jm1 * Δt/2 
+                                                     + 0.5 * Δt * B * (input[:,j-1] + input[:,j]))
             end
+            u2_jm1 = u2
             u3_jm1 = u3
         end
     end
@@ -318,35 +355,37 @@ end
 """
 $(SIGNATURES)
 
-Semi-Implicit Euler (SIE) scheme without control
+Semi-Implicit Euler scheme without control
 """
-function integrate_model_without_control_SIE(tdata, u0; linear_matrix, cubic_matrix)
+function integrate_model_without_control(tdata, u0; linear_matrix, quadratic_matrix, cubic_matrix)
     xdim = length(u0)
     tdim = length(tdata)
     u = zeros(xdim, tdim)
     u[:, 1] = u0
 
     A = linear_matrix
+    F = quadratic_matrix
     E = cubic_matrix
 
     for j in 2:tdim
         Δt = tdata[j] - tdata[j-1]
-        u3 = ⊘(u[:, j-1], u[:, j-1], u[:, j-1])
-        u[:, j] = (1.0I(xdim) - Δt * A) \ (u[:, j-1] + E * u3 * Δt)
+        u2 = u[:, j-1] ⊘ u[:, j-1]
+        u3 = ⊘(u[:, j-1], 3)
+        u[:, j] = (1.0I(xdim) - Δt * A) \ (u[:, j-1] + F * u2 * Δt + E * u3 * Δt)
     end
     return u
 end
-
 
 """
 $(SIGNATURES)
 
 Crank-Nicolson Adam-Bashforth (CNAB) scheme without control
 """
-function integrate_model_without_control_CNAB(tdata, u0; linear_matrix, cubic_matrix,
-                                              const_stepsize=false, u3_jm1=nothing)
+function integrate_model_without_control_CNAB(tdata, u0; linear_matrix, quadratic_matrix, cubic_matrix, 
+                                              const_stepsize=false, u2_jm1=nothing, u3_jm1=nothing)
     # Unpack matrices
     A = linear_matrix
+    F = quadratic_matrix
     E = cubic_matrix
 
     xdim = length(u0)
@@ -360,23 +399,31 @@ function integrate_model_without_control_CNAB(tdata, u0; linear_matrix, cubic_ma
         IpdtA = (1.0I(xdim) + Δt/2 * A)
 
         for j in 2:tdim
+            u2 = ⊘(u[:, j-1], 2)
             u3 = ⊘(u[:, j-1], 3)
-            if j == 2 && isnothing(u3_jm1)
-                u[:, j] = ImdtA_inv * (IpdtA * u[:, j-1] + E * u3 * Δt)
+            if j == 2 && (isnothing(u3_jm1) || isnothing(u2_jm1))
+                u[:, j] = ImdtA_inv * (IpdtA * u[:, j-1] + F * u2 * Δt +  E * u3 * Δt)
             else
-                u[:, j] = ImdtA_inv * (IpdtA * u[:, j-1] + E * u3 * 3*Δt/2 - E * u3_jm1 * Δt/2)
+                u[:, j] = ImdtA_inv * (IpdtA * u[:, j-1] + 
+                                       F * u2 * 3*Δt/2 - F * u2_jm1 * Δt/2 +
+                                       E * u3 * 3*Δt/2 - E * u3_jm1 * Δt/2)
             end
+            u2_jm1 = u2
             u3_jm1 = u3
         end
     else
         for j in 2:tdim
             Δt = tdata[j] - tdata[j-1]
+            u2 = ⊘(u[:, j-1], 2)
             u3 = ⊘(u[:, j-1], 3)
             if j == 2 && isnothing(u3_jm1)
-                u[:, j] = (1.0I(xdim) - Δt/2 * A) \ ((1.0I(xdim) + Δt/2 * A) * u[:, j-1] + E * u3 * Δt)
+                u[:, j] = (1.0I(xdim) - Δt/2 * A) \ ((1.0I(xdim) + Δt/2 * A) * u[:, j-1] + F * u2 * Δt + E * u3 * Δt)
             else
-                u[:, j] = (1.0I(xdim) - Δt/2 * A) \ ((1.0I(xdim) + Δt/2 * A) * u[:, j-1] + E * u3 * 3*Δt/2 - E * u3_jm1 * Δt/2)
+                u[:, j] = (1.0I(xdim) - Δt/2 * A) \ ((1.0I(xdim) + Δt/2 * A) * u[:, j-1] + 
+                                                     F * u2 * 3*Δt/2 - F * u2_jm1 * Δt/2 +
+                                                     E * u3 * 3*Δt/2 - E * u3_jm1 * Δt/2)
             end
+            u2_jm1 = u2
             u3_jm1 = u3
         end
     end
@@ -387,6 +434,7 @@ end
 function integrate_model(tdata::AbstractArray{T}, u0::AbstractArray{T}, input::AbstractArray{T}=T[]; kwargs...) where {T<:Real}
     # Check that keyword exists in kwargs
     @assert haskey(kwargs, :linear_matrix) "Keyword :linear_matrix not found"
+    @assert haskey(kwargs, :quadratic_matrix) "Keyword :quadratic_matrix not found"
     @assert haskey(kwargs, :cubic_matrix) "Keyword :cubic_matrix not found"
     if !isempty(input)
         @assert haskey(kwargs, :control_matrix) "Keyword :control_matrix not found"
@@ -394,10 +442,12 @@ function integrate_model(tdata::AbstractArray{T}, u0::AbstractArray{T}, input::A
 
     # Unpack the keyword arguments
     linear_matrix = kwargs[:linear_matrix]
+    quadratic_matrix = kwargs[:quadratic_matrix]
     cubic_matrix = kwargs[:cubic_matrix]
     control_matrix = haskey(kwargs, :control_matrix) ? kwargs[:control_matrix] : nothing
     system_input = haskey(kwargs, :system_input) ? kwargs[:system_input] : !isempty(input)
     const_stepsize = haskey(kwargs, :const_stepsize) ? kwargs[:const_stepsize] : false
+    u2_jm1 = haskey(kwargs, :u2_jm1) ? kwargs[:u2_jm1] : nothing
     u3_jm1 = haskey(kwargs, :u3_jm1) ? kwargs[:u3_jm1] : nothing
     if haskey(kwargs, :integrator_type)
         integrator_type = kwargs[:integrator_type]
@@ -408,44 +458,21 @@ function integrate_model(tdata::AbstractArray{T}, u0::AbstractArray{T}, input::A
 
     if system_input
         if integrator_type == :SIE
-            integrate_model_with_control_SIE(tdata, u0, input; linear_matrix=linear_matrix, cubic_matrix=cubic_matrix, control_matrix=control_matrix)
+            integrate_model_with_control_SIE(tdata, u0, input; linear_matrix=linear_matrix, quadratic_matrix=quadratic_matrix, 
+                                             cubic_matrix=cubic_matrix, control_matrix=control_matrix)
         else
-            integrate_model_with_control_CNAB(tdata, u0, input; linear_matrix=linear_matrix, cubic_matrix=cubic_matrix, 
-                                              control_matrix=control_matrix, const_stepsize=const_stepsize, u3_jm1=u3_jm1)
+            integrate_model_with_control_CNAB(tdata, u0, input; linear_matrix=linear_matrix, quadratic_matrix=quadratic_matrix, cubic_matrix=cubic_matrix, 
+                                              control_matrix=control_matrix, const_stepsize=const_stepsize, u2_jm1=u2_jm1, u3_jm1=u3_jm1)
         end
     else
         if integrator_type == :SIE
-            integrate_model_without_control_SIE(tdata, u0; linear_matrix=linear_matrix, cubic_matrix=cubic_matrix)
+            integrate_model_without_control_SIE(tdata, u0; linear_matrix=linear_matrix, quadratic_matrix=quadratic_matrix, cubic_matrix=cubic_matrix)
         else
-            integrate_model_without_control_CNAB(tdata, u0; linear_matrix=linear_matrix, cubic_matrix=cubic_matrix,
-                                                 const_stepsize=const_stepsize, u3_jm1=u3_jm1)
+            integrate_model_without_control_CNAB(tdata, u0; linear_matrix=linear_matrix, quadratic_matrix=quadratic_matrix, cubic_matrix=cubic_matrix,
+                                                 const_stepsize=const_stepsize, u2_jm1=u2_jm1, u3_jm1=u3_jm1)
         end
     end
 end
 
-# """
-#     integrate_model(ops, tdata, IC) → states
-
-# Semi-Implicit Euler scheme without control (dispatch)
-# """
-# function integrate_model(ops, tdata, IC)
-#     A = ops.A 
-#     F = ops.F 
-#     E = ops.E
-#     Xdim = length(IC)
-#     Tdim = length(tdata)
-#     state = zeros(Xdim, Tdim)
-#     state[:, 1] = IC
-
-#     for j in 2:Tdim
-#         Δt = tdata[j] - tdata[j-1]
-#         # state2 = vech(state[:, j-1] * state[:, j-1]')
-#         state2 = state[:, j-1] ⊘ state[:, j-1]
-#         state3 = ⊘(state[:, j-1], state[:, j-1], state[:, j-1])
-#         state[:, j] = (1.0I(Xdim) - Δt * A) \ (state[:, j-1] + F * state2 * Δt + E * state3 * Δt)
-#     end
-#     return state
-# end
 
 end
-

@@ -8,7 +8,7 @@ using LinearAlgebra
 using SparseArrays
 using UniqueKronecker
 
-import ..PolynomialModelReductionDataset: AbstractModel
+import ..PolynomialModelReductionDataset: AbstractModel, adjust_input
 
 export GardnerModel
 
@@ -81,7 +81,7 @@ function GardnerModel(;spatial_domain::Tuple{Real,Real}, time_domain::Tuple{Real
     if BC == :periodic
         xspan = collect(spatial_domain[1]:Δx:spatial_domain[2]-Δx)
     elseif BC ∈ (:dirichlet, :neumann, :mixed, :robin, :cauchy) 
-        xspan = collect(spatial_domain[1]:Δx:spatial_domain[2])[2:end-1]
+        xspan = collect(spatial_domain[1]:Δx:spatial_domain[2])
     end
     tspan = collect(time_domain[1]:Δt:time_domain[2])
     spatial_dim = length(xspan)
@@ -109,7 +109,7 @@ $(SIGNATURES)
 Finite Difference Model for Gardner equation
 
 ## Arguments
-- `model::GarderModel`: Gardner model
+- `model::GardnerModel`: Gardner model
 - `params::Real`: params including a, b, c
 
 ## Returns
@@ -118,11 +118,75 @@ Finite Difference Model for Gardner equation
 function finite_diff_model(model::GardnerModel, params::Dict)
     if model.BC == :periodic
         return finite_diff_periodic_model(model.spatial_dim, model.Δx, params)
+    elseif model.BC == :dirichlet
+        return finite_diff_dirichlet_model(model.spatial_dim, model.Δx, model.Δt, params)
     else
         error("Boundary condition not implemented")
     end
 end
 
+
+"""
+$(SIGNATURES)
+
+Generate A, F, E, B matrices for the Gardner equation for Dirichlet boundary condition.
+"""
+function finite_diff_dirichlet_model(N::Real, Δx::Real, Δt::Real, params::Dict)
+    # Create A matrix
+    α = params[:a]
+    β = params[:b]
+    γ = params[:c]
+
+    A = spdiagm(
+        2 => 0.5 * ones(N - 2),
+        1 => -1 * ones(N - 1),
+        0 => zeros(N),
+        -1 => 1 * ones(N - 1), 
+        -2 => -0.5 * ones(N - 2)
+    ) * (-α) / Δx^3
+    A[1, 1:3] = [-1/Δt, 0, 0]
+    A[2, 1:4] = [0, -1/Δt, 0, 0]
+    A[end-1, end-3:end] = [0, 0, -1/Δt, 0]
+    A[end, end-2:end] = [0, 0, -1/Δt]
+
+    # Create F matrix
+    S = Int(N * (N + 1) / 2)
+    if N >= 3
+        Fval = repeat([1.0, -1.0], outer=N - 2)
+        row_i = repeat(2:(N-1), inner=2)
+        seq = Int.([2 + (N + 1) * (x - 1) - x * (x - 1) / 2 for x in 1:(N-1)])
+        col_i = vcat(seq[1], repeat(seq[2:end-1], inner=2), seq[end])
+        F = sparse(row_i, col_i, Fval, N, S) / 2 / Δx
+    else
+        F = zeros(N, S)
+    end
+    F *= β
+
+    # Create E matrix
+    S = Int(N * (N + 1) * (N + 2) / 6)
+    if N >= 3
+        cubic_idx_diff = reverse([Int(3 + 2*(i-1) + 0.5*i*(i-1)) for i in 1:N-1])
+        pushfirst!(cubic_idx_diff, 1)
+        cubic_idx = cumsum(cubic_idx_diff)
+        iii = repeat(3:(N-2), inner=2)
+        jjjp = cubic_idx[3:end-2] .+ 1
+        jjjm = cubic_idx[2:end-3] + range(N-1, step=-1, stop=4)
+        jjj = reshape([jjjm'; jjjp'], 2N-8)
+        vvv = reshape([ones(1,N-4); -ones(1,N-4)], 2N-8) * γ / 2 / Δx
+        E = sparse(iii, jjj, vvv, N, S)
+    else 
+        E = spzeros(N, S)
+    end
+
+    # Create B matrix
+    B = spzeros(N, 2)
+    B[1,1] = 1 / Δt
+    B[2,1] = 1 / Δt
+    B[end,2] = 1 / Δt
+    B[end-1,2] = 1 / Δt
+
+    return A, F, E, B
+end
 
 
 """
@@ -169,88 +233,241 @@ function finite_diff_periodic_model(N::Real, Δx::Real, params::Dict)
     F *= β
 
     # Create E matrix
-    indices = NTuple{4,<:Int}[]
-    for i in 2:N-1
-        push!(indices, (i, i, i+1, i))
-        push!(indices, (i-1, i, i, i))
+    S = Int(N * (N + 1) * (N + 2) / 6)
+    if N >= 3
+        cubic_idx_diff = reverse([Int(3 + 2*(i-1) + 0.5*i*(i-1)) for i in 1:N-1])
+        pushfirst!(cubic_idx_diff, 1)
+        cubic_idx = cumsum(cubic_idx_diff)
+        iii = repeat(3:(N-2), inner=2)
+        jjjp = cubic_idx[3:end-2] .+ 1
+        jjjm = cubic_idx[2:end-3] + range(N-1, step=-1, stop=4)
+        jjj = reshape([jjjm'; jjjp'], 2N-8)
+        vvv = reshape([ones(1,N-4); -ones(1,N-4)], 2N-8) * γ / 2 / Δx
+        E = sparse(iii, jjj, vvv, N, S)
+    else 
+        E = spzeros(N, S)
     end
-    push!(indices, (1,1,2,1))
-    push!(indices, (N,1,1,1))
-    push!(indices, (N-1,N,N,N))
-    push!(indices, (N,N,1,N))
-    values = γ / 2 / Δx * ones(length(indices))
-    E = makePolyOp(N, indices, values; nonredundant=true)
+    # BC
+    E[1,2] = -β / 2 / Δx  # x_1^2 x_2
+    E[1,N] = β / 2 / Δx  # x_1 x_N^2
+    E[N,end-1] = β / 2 / Δx  # x_N^2 x_{N-1}
+    E[N,Int(N*(N+1)÷2)] = -β / 2 / Δx  # x_N x_1^2
 
     return A, F, E
 end
 
 
 """
-    integrate_model(A, B, F, E, U, tdata, IC) → states
+$(SIGNATURES)
 
-Semi-Implicit Euler scheme
+Semi-Implicit Euler scheme with control
 """
-function integrate_model(A, B, F, E, U, tdata, IC)
-    Xdim = length(IC)
-    Tdim = length(tdata)
-    state = zeros(Xdim, Tdim)
-    state[:, 1] = IC
+function integrate_model_with_control(tdata, u0, input; linear_matrix, quadratic_matrix, 
+                                      cubic_matrix, control_matrix)
+    xdim = length(u0)
+    tdim = length(tdata)
+    u = zeros(xdim, tdim)
+    u[:, 1] = u0
 
-    for j in 2:Tdim
+    A = linear_matrix
+    F = quadratic_matrix
+    E = cubic_matrix
+    B = control_matrix
+
+    for j in 2:tdim
         Δt = tdata[j] - tdata[j-1]
-        # state2 = vech(state[:, j-1] * state[:, j-1]')
-        state2 = state[:, j-1] ⊘ state[:, j-1]
-        state3 = ⊘(state[:, j-1], state[:, j-1], state[:, j-1])
-        state[:, j] = (1.0I(Xdim) - Δt * A) \ (state[:, j-1] + F * state2 * Δt + E * state3 * Δt + B * U[j-1] * Δt)
+        u2 = u[:, j-1] ⊘ u[:, j-1]
+        u3 = ⊘(u[:, j-1], 3)
+        u[:, j] = (1.0I(xdim) - Δt * A) \ (u[:, j-1] + F * u2 * Δt + E * u3 * Δt + B * input[j-1] * Δt)
     end
-    return state
+    return u
 end
 
 
 """
-    integrate_model(A, F, E, tdata, IC) → states
+$(SIGNATURES)
 
-Semi-Implicit Euler scheme without control (dispatch)
+Crank-Nicolson Adam-Bashforth (CNAB) scheme with control
 """
-function integrate_model(A, F, E, tdata, IC)
-    Xdim = length(IC)
-    Tdim = length(tdata)
-    state = zeros(Xdim, Tdim)
-    state[:, 1] = IC
+function integrate_model_with_control_CNAB(tdata, u0, input; linear_matrix, quadratic_matrix, cubic_matrix, 
+                                           control_matrix, const_stepsize=false, u2_jm1=nothing, u3_jm1=nothing)
+    # Unpack matrices
+    A = linear_matrix
+    F = quadratic_matrix
+    B = control_matrix
+    E = cubic_matrix
 
-    for j in 2:Tdim
-        Δt = tdata[j] - tdata[j-1]
-        # state2 = vech(state[:, j-1] * state[:, j-1]')
-        state2 = state[:, j-1] ⊘ state[:, j-1]
-        state3 = ⊘(state[:, j-1], state[:, j-1], state[:, j-1])
-        state[:, j] = (1.0I(Xdim) - Δt * A) \ (state[:, j-1] + F * state2 * Δt + E * state3 * Δt)
+    xdim = length(u0)
+    tdim = length(tdata)
+    u = zeros(xdim, tdim)
+    u[:, 1] = u0
+
+    # Adjust the input
+    input_dim = size(B, 2)  # Number of inputs
+    input = adjust_input(input, input_dim, tdim)
+
+    if const_stepsize
+        Δt = tdata[2] - tdata[1]  # assuming a constant time step size
+        ImdtA_inv = Matrix(1.0I(xdim) - Δt/2 * A) \ 1.0I(xdim) # |> sparse
+        IpdtA = (1.0I(xdim) + Δt/2 * A)
+
+        for j in 2:tdim
+            u2 = ⊘(u[:, j-1], 2)
+            u3 = ⊘(u[:, j-1], 3)
+            if j == 2 && (isnothing(u3_jm1) || isnothing(u2_jm1))
+                u[:, j] = ImdtA_inv * (IpdtA * u[:, j-1] + F * u2 * Δt +  E * u3 * Δt + 0.5 * Δt * B * (input[:,j-1] + input[:,j]))
+            else
+                u[:, j] = ImdtA_inv * (IpdtA * u[:, j-1] + 
+                                       F * u2 * 3*Δt/2 - F * u2_jm1 * Δt/2 +
+                                       E * u3 * 3*Δt/2 - E * u3_jm1 * Δt/2 + 
+                                       0.5 * Δt * B * (input[:,j-1] + input[:,j]))
+            end
+            u2_jm1 = u2
+            u3_jm1 = u3
+        end
+    else
+        for j in 2:tdim
+            Δt = tdata[j] - tdata[j-1]
+            u2 = ⊘(u[:, j-1], 2)
+            u3 = ⊘(u[:, j-1], 3)
+            if j == 2 && isnothing(u3_jm1)
+                u[:, j] = (1.0I(xdim) - Δt/2 * A) \ ((1.0I(xdim) + Δt/2 * A) * u[:, j-1] + 
+                                                     F * u2 * Δt + E * u3 * Δt + 0.5 * Δt * B * (input[:,j-1] + input[:,j]))
+            else
+                u[:, j] = (1.0I(xdim) - Δt/2 * A) \ ((1.0I(xdim) + Δt/2 * A) * u[:, j-1] + 
+                                                     F * u2 * 3*Δt/2 - F * u2_jm1 * Δt/2 +
+                                                     E * u3 * 3*Δt/2 - E * u3_jm1 * Δt/2 
+                                                     + 0.5 * Δt * B * (input[:,j-1] + input[:,j]))
+            end
+            u2_jm1 = u2
+            u3_jm1 = u3
+        end
     end
-    return state
+    return u
 end
 
 
 """
-    integrate_model(ops, tdata, IC) → states
+$(SIGNATURES)
 
-Semi-Implicit Euler scheme without control (dispatch)
+Semi-Implicit Euler scheme without control
 """
-function integrate_model(ops, tdata, IC)
-    A = ops.A 
-    F = ops.F 
-    E = ops.E
-    Xdim = length(IC)
-    Tdim = length(tdata)
-    state = zeros(Xdim, Tdim)
-    state[:, 1] = IC
+function integrate_model_without_control(tdata, u0; linear_matrix, quadratic_matrix, cubic_matrix)
+    xdim = length(u0)
+    tdim = length(tdata)
+    u = zeros(xdim, tdim)
+    u[:, 1] = u0
 
-    for j in 2:Tdim
+    A = linear_matrix
+    F = quadratic_matrix
+    E = cubic_matrix
+
+    for j in 2:tdim
         Δt = tdata[j] - tdata[j-1]
-        # state2 = vech(state[:, j-1] * state[:, j-1]')
-        state2 = state[:, j-1] ⊘ state[:, j-1]
-        state3 = ⊘(state[:, j-1], state[:, j-1], state[:, j-1])
-        state[:, j] = (1.0I(Xdim) - Δt * A) \ (state[:, j-1] + F * state2 * Δt + E * state3 * Δt)
+        u2 = u[:, j-1] ⊘ u[:, j-1]
+        u3 = ⊘(u[:, j-1], 3)
+        u[:, j] = (1.0I(xdim) - Δt * A) \ (u[:, j-1] + F * u2 * Δt + E * u3 * Δt)
     end
-    return state
+    return u
 end
+
+"""
+$(SIGNATURES)
+
+Crank-Nicolson Adam-Bashforth (CNAB) scheme without control
+"""
+function integrate_model_without_control_CNAB(tdata, u0; linear_matrix, quadratic_matrix, cubic_matrix, 
+                                              const_stepsize=false, u2_jm1=nothing, u3_jm1=nothing)
+    # Unpack matrices
+    A = linear_matrix
+    F = quadratic_matrix
+    E = cubic_matrix
+
+    xdim = length(u0)
+    tdim = length(tdata)
+    u = zeros(xdim, tdim)
+    u[:, 1] = u0
+
+    if const_stepsize
+        Δt = tdata[2] - tdata[1]  # assuming a constant time step size
+        ImdtA_inv = Matrix(1.0I(xdim) - Δt/2 * A) \ 1.0I(xdim) # |> sparse
+        IpdtA = (1.0I(xdim) + Δt/2 * A)
+
+        for j in 2:tdim
+            u2 = ⊘(u[:, j-1], 2)
+            u3 = ⊘(u[:, j-1], 3)
+            if j == 2 && (isnothing(u3_jm1) || isnothing(u2_jm1))
+                u[:, j] = ImdtA_inv * (IpdtA * u[:, j-1] + F * u2 * Δt +  E * u3 * Δt)
+            else
+                u[:, j] = ImdtA_inv * (IpdtA * u[:, j-1] + 
+                                       F * u2 * 3*Δt/2 - F * u2_jm1 * Δt/2 +
+                                       E * u3 * 3*Δt/2 - E * u3_jm1 * Δt/2)
+            end
+            u2_jm1 = u2
+            u3_jm1 = u3
+        end
+    else
+        for j in 2:tdim
+            Δt = tdata[j] - tdata[j-1]
+            u2 = ⊘(u[:, j-1], 2)
+            u3 = ⊘(u[:, j-1], 3)
+            if j == 2 && isnothing(u3_jm1)
+                u[:, j] = (1.0I(xdim) - Δt/2 * A) \ ((1.0I(xdim) + Δt/2 * A) * u[:, j-1] + F * u2 * Δt + E * u3 * Δt)
+            else
+                u[:, j] = (1.0I(xdim) - Δt/2 * A) \ ((1.0I(xdim) + Δt/2 * A) * u[:, j-1] + 
+                                                     F * u2 * 3*Δt/2 - F * u2_jm1 * Δt/2 +
+                                                     E * u3 * 3*Δt/2 - E * u3_jm1 * Δt/2)
+            end
+            u2_jm1 = u2
+            u3_jm1 = u3
+        end
+    end
+    return u
+end
+
+
+function integrate_model(tdata::AbstractArray{T}, u0::AbstractArray{T}, input::AbstractArray{T}=T[]; kwargs...) where {T<:Real}
+    # Check that keyword exists in kwargs
+    @assert haskey(kwargs, :linear_matrix) "Keyword :linear_matrix not found"
+    @assert haskey(kwargs, :quadratic_matrix) "Keyword :quadratic_matrix not found"
+    @assert haskey(kwargs, :cubic_matrix) "Keyword :cubic_matrix not found"
+    if !isempty(input)
+        @assert haskey(kwargs, :control_matrix) "Keyword :control_matrix not found"
+    end
+
+    # Unpack the keyword arguments
+    linear_matrix = kwargs[:linear_matrix]
+    quadratic_matrix = kwargs[:quadratic_matrix]
+    cubic_matrix = kwargs[:cubic_matrix]
+    control_matrix = haskey(kwargs, :control_matrix) ? kwargs[:control_matrix] : nothing
+    system_input = haskey(kwargs, :system_input) ? kwargs[:system_input] : !isempty(input)
+    const_stepsize = haskey(kwargs, :const_stepsize) ? kwargs[:const_stepsize] : false
+    u2_jm1 = haskey(kwargs, :u2_jm1) ? kwargs[:u2_jm1] : nothing
+    u3_jm1 = haskey(kwargs, :u3_jm1) ? kwargs[:u3_jm1] : nothing
+    if haskey(kwargs, :integrator_type)
+        integrator_type = kwargs[:integrator_type]
+        @assert integrator_type ∈ (:SIE, :CNAB) "Invalid integrator type. Choose from (:SIE, :CNAB), where SIE is Semi-Implicit Euler and CNAB is Crank-Nicolson Adam-Bashforth"
+    else
+        integrator_type = :CNAB
+    end
+
+    if system_input
+        if integrator_type == :SIE
+            integrate_model_with_control_SIE(tdata, u0, input; linear_matrix=linear_matrix, quadratic_matrix=quadratic_matrix, 
+                                             cubic_matrix=cubic_matrix, control_matrix=control_matrix)
+        else
+            integrate_model_with_control_CNAB(tdata, u0, input; linear_matrix=linear_matrix, quadratic_matrix=quadratic_matrix, cubic_matrix=cubic_matrix, 
+                                              control_matrix=control_matrix, const_stepsize=const_stepsize, u2_jm1=u2_jm1, u3_jm1=u3_jm1)
+        end
+    else
+        if integrator_type == :SIE
+            integrate_model_without_control_SIE(tdata, u0; linear_matrix=linear_matrix, quadratic_matrix=quadratic_matrix, cubic_matrix=cubic_matrix)
+        else
+            integrate_model_without_control_CNAB(tdata, u0; linear_matrix=linear_matrix, quadratic_matrix=quadratic_matrix, cubic_matrix=cubic_matrix,
+                                                 const_stepsize=const_stepsize, u2_jm1=u2_jm1, u3_jm1=u3_jm1)
+        end
+    end
+end
+
 
 end
