@@ -176,8 +176,8 @@ function finite_diff_mixed_model(N::Real, Δx::Real, μ::Real, ϵ::Real)
 
     # Create B matrix
     B = spzeros(N,2)
-    B[1,1] = 1 / Δx^2  # from Dirichlet boundary condition
-    B[end,2] = 1 / Δx  # from Neumann boundary condition
+    B[1,1] = μ / Δx^2  # from Dirichlet boundary condition
+    B[end,2] = μ / Δx  # from Neumann boundary condition
 
     return A, B, E
 end
