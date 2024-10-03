@@ -40,7 +40,7 @@ The main goal of this package is to accelerate the development of novel model re
 | --- | --- | --- |
 | 1D Heat | $u_t = \mu u_{xx}$ | periodic, Dirichlet |
 | Viscous Burgers' | $u_t = \mu u_{xx} - uu_{x}$ | periodic, Dirichlet | 
-| FitzHugh-Nagumo | $ u_t =  \epsilon^2 u_{xx} + u(u-0.1)(1-u) - v + g$ <br/> $v_t = hu + \gamma v + g \end{align} $ | [Dirichlet and Neumann](https://morwiki.mpi-magdeburg.mpg.de/morwiki/index.php/FitzHugh-Nagumo_System) |
+| FitzHugh-Nagumo | $ u_t =  \epsilon^2 u_{xx} + u(u-0.1)(1-u) - v + g$ <br/> $v_t = hu + \gamma v + g $ | [Dirichlet and Neumann](https://morwiki.mpi-magdeburg.mpg.de/morwiki/index.php/FitzHugh-Nagumo_System) |
 | Fisher-KPP | $u_t = D u_{xx} + ru(1-u)$ | periodic, Dirichlet, Dirichlet and Neumann (mixed) | 
 | Allen-Cahn | $u_t = \mu u_{xx} - \epsilon(u - u^3)$ | periodic, Dirichlet, Dirichlet and Neumann (mixed) |
 | Kuramoto-Sivashinsky | $u_t = -\mu u_{xxxx} - u_{xx} - uu_x$ | periodic |
