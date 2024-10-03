@@ -31,7 +31,8 @@ A, B, F = burgers.finite_diff_model(burgers, burgers.diffusion_coeffs; opposite_
 #============#
 U = burgers.integrate_model(
     burgers.tspan, burgers.IC, Ubc; 
-    operators=[A,B,F], system_input=true
+    linear_matrix=A, control_matrix=B, quadratic_matrix=F,
+    system_input=true
 )
 
 #================#
@@ -71,7 +72,8 @@ A, F = burgers.finite_diff_model(burgers, burgers.diffusion_coeffs)
 #============#
 U = burgers.integrate_model(
     burgers.tspan, burgers.IC, Float64[]; 
-    operators=[A,F], system_input=false
+    linear_matrix=A, quadratic_matrix=F,
+    system_input=false
 )
 
 #================#
@@ -111,7 +113,8 @@ A, F = burgers.finite_diff_model(burgers, burgers.diffusion_coeffs)
 #============#
 U = burgers.integrate_model(
     burgers.tspan, burgers.IC, Float64[]; 
-    operators=[A,F], system_input=false
+    linear_matrix=A, quadratic_matrix=F,
+    system_input=false
 )
 
 #================#
@@ -151,7 +154,8 @@ A, F = burgers.finite_diff_model(burgers, burgers.diffusion_coeffs)
 #============#
 U = burgers.integrate_model(
     burgers.tspan, burgers.IC, Float64[]; 
-    operators=[A,F], system_input=false
+    linear_matrix=A, quadratic_matrix=F,
+    system_input=false
 )
 
 #================#
@@ -163,7 +167,7 @@ fig7, _, sf = CairoMakie.surface(burgers.xspan, burgers.tspan, U,
 CairoMakie.Colorbar(fig7[1, 2], sf)
 display(fig7)
 
-## Flow field
+# Flow field
 fig8, ax, hm = CairoMakie.heatmap(burgers.xspan, burgers.tspan, U)
 ax.xlabel = L"x"
 ax.ylabel = L"t"

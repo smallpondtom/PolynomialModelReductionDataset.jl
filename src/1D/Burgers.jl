@@ -301,12 +301,10 @@ end
 $(SIGNATURES)
 
 Semi-Implicit Euler scheme with control
-
-# Notes
-- `operators` should be in the order of `A, F, B`
 """
 function integrate_model_with_control(tdata::AbstractArray{T}, u0::AbstractArray{T},
-                                      input::AbstractArray{T}; operators) where {T<:Real}
+                                      input::AbstractArray{T}; linear_matrix, quadratic_matrix, 
+                                      control_matrix) where {T<:Real}
     # Integration settings
     xdim = length(u0)
     tdim = length(tdata)
@@ -314,7 +312,9 @@ function integrate_model_with_control(tdata::AbstractArray{T}, u0::AbstractArray
     u[:, 1] = u0
 
     # Operators
-    A, B, F = operators
+    A = linear_matrix
+    F = quadratic_matrix
+    B = control_matrix
 
     # Integration
     for j in 2:tdim
@@ -330,12 +330,9 @@ end
 $(SIGNATURES)
 
 Semi-Implicit Euler scheme without control
-
-# Notes
-- `operators` should be in the order of `A, F`
 """
 function integrate_model_without_control(tdata::AbstractArray{T}, u0::AbstractArray{T}; 
-                                         operators) where {T<:Real}
+                                         linear_matrix, quadratic_matrix) where {T<:Real}
     # Integration settings
     xdim = length(u0)
     tdim = length(tdata)
@@ -343,7 +340,8 @@ function integrate_model_without_control(tdata::AbstractArray{T}, u0::AbstractAr
     u[:, 1] = u0
 
     # Operators
-    A, F = operators
+    A = linear_matrix
+    F = quadratic_matrix
 
     for j in 2:tdim
         Δt = tdata[j] - tdata[j-1]
@@ -381,11 +379,13 @@ Integrate the viscous Burgers' equation model
 function integrate_model(tdata::AbstractArray{T}, u0::AbstractArray{T}, 
                          input::AbstractArray{T}=T[]; kwargs...) where {T<:Real}
     # Check that keyword exists in kwargs
-    @assert haskey(kwargs, :operators) "Keyword :operators not found"
+    @assert haskey(kwargs, :linear_matrix) "Keyword :linear_matrix not found"
+    @assert haskey(kwargs, :quadratic_matrix) "Keyword :quadratic_matrix not found"
     @assert haskey(kwargs, :system_input) "Keyword :system_input not found"
     
     # Unpack the keyword arguments
-    operators = kwargs[:operators]
+    A = kwargs[:linear_matrix]
+    F = kwargs[:quadratic_matrix]
     system_input = kwargs[:system_input]
 
     # Integration settings
@@ -396,19 +396,18 @@ function integrate_model(tdata::AbstractArray{T}, u0::AbstractArray{T},
 
     # Adjust input dimensions if system_input is true
     if system_input
-        A, B, F = operators
+        @assert haskey(kwargs, :control_matrix) "Keyword :control_matrix not found"
+        B = kwargs[:control_matrix]
         input_dim = size(B, 2)  # Number of inputs
 
         # Adjust the input
         input = adjust_input(input, input_dim, tdim)
-    else
-        A, F = operators
     end
 
     if system_input
-        return integrate_model_with_control(tdata, u0, input; operators)
+        return integrate_model_with_control(tdata, u0, input; linear_matrix=A, quadratic_matrix=F, control_matrix=B)
     else
-        return integrate_model_without_control(tdata, u0; operators)
+        return integrate_model_without_control(tdata, u0; linear_matrix=A, quadratic_matrix=F)
     end
 end
 

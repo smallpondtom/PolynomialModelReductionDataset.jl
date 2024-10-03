@@ -28,8 +28,8 @@ A, B = heat1d.finite_diff_model(heat1d, heat1d.diffusion_coeffs; same_on_both_en
 ## Forward Euler
 #================#
 U = heat1d.integrate_model(
-    heat1d.tspan, heat1d.IC, Ubc; 
-    operators=[A,B], system_input=true, integrator_type=:ForwardEuler
+    heat1d.tspan, heat1d.IC, Ubc; linear_matrix=A, control_matrix=B, 
+    system_input=true, integrator_type=:ForwardEuler
 )
 println("Forward Euler is unstable for 1D heat equation")
 
@@ -37,8 +37,8 @@ println("Forward Euler is unstable for 1D heat equation")
 ## Backward Euler
 #=================#
 U = heat1d.integrate_model(
-    heat1d.tspan, heat1d.IC, Ubc; 
-    operators=[A,B], system_input=true, integrator_type=:BackwardEuler
+    heat1d.tspan, heat1d.IC, Ubc; linear_matrix=A, control_matrix=B,
+    system_input=true, integrator_type=:BackwardEuler
 )
 
 #================#
@@ -61,8 +61,8 @@ display(fig2)
 ## Crank-Nicolson
 #=================#
 U = heat1d.integrate_model(
-    heat1d.tspan, heat1d.IC, Ubc; 
-    operators=[A,B], system_input=true, integrator_type=:CrankNicolson
+    heat1d.tspan, heat1d.IC, Ubc; linear_matrix=A, control_matrix=B,
+    system_input=true, integrator_type=:CrankNicolson
 )
 
 #================#
