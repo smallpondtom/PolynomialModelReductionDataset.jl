@@ -17,7 +17,7 @@ export KuramotoSivashinskyModel
 """
 $(TYPEDEF)
 
-Kuramoto-Sivashinsky equation PDE model
+Kuramoto-Sivashinsky equation model
     
 ```math
 \\frac{\\partial u}{\\partial t} = -\\mu\\frac{\\partial^4 u}{\\partial x^4} - \\frac{\\partial^2 u}{\\partial x^2} - u\\frac{\\partial u}{\\partial x}
@@ -137,7 +137,19 @@ function KuramotoSivashinskyModel(;spatial_domain::Tuple{Real,Real}, time_domain
 end
 
 
+"""
+$(SIGNATURES)
 
+Finite Difference Model for the Kuramoto-Sivashinsky equation.
+
+# Arguments
+- `model::KuramotoSivashinskyModel`: Kuramoto-Sivashinsky equation model
+- `μ::Real`: parameter value
+
+# Returns
+- `A`: A matrix
+- `F`: F matrix
+"""
 function finite_diff_model(model::KuramotoSivashinskyModel, μ::Real)
     if model.BC == :periodic
         if model.conservation_type == :NC
@@ -155,6 +167,11 @@ function finite_diff_model(model::KuramotoSivashinskyModel, μ::Real)
 end
 
 
+"""
+$(SIGNATURES)
+
+Finite Difference Model for the Kuramoto-Sivashinsky equation with periodic boundary condition.
+"""
 function finite_diff_periodic_nonconservative_model(N::Real, Δx::Real, μ::Real)
     # Create A matrix
     ζ = 2/Δx^2 - 6*μ/Δx^4
@@ -193,7 +210,11 @@ function finite_diff_periodic_nonconservative_model(N::Real, Δx::Real, μ::Real
 end
 
 
+"""
+$(SIGNATURES)
 
+Finite Difference Model for the Kuramoto-Sivashinsky equation with periodic boundary condition.
+"""
 function finite_diff_periodic_conservative_model(N::Real, Δx::Real, μ::Real)
     # Create A matrix
     ζ = 2/Δx^2 - 6*μ/Δx^4
@@ -234,6 +255,11 @@ function finite_diff_periodic_conservative_model(N::Real, Δx::Real, μ::Real)
 end
 
 
+"""
+$(SIGNATURES)
+
+Finite Difference Model for the Kuramoto-Sivashinsky equation with periodic boundary condition.
+"""
 function finite_diff_periodic_energy_preserving_model(N::Real, Δx::Real, μ::Real)
     # Create A matrix
     ζ = 2/Δx^2 - 6*μ/Δx^4
@@ -283,7 +309,7 @@ end
 
 
 """
-    pseudo_spectral_model(model, μ) → A, F
+$(SIGNATURES)
 
 Generate A, F matrices for the Kuramoto-Sivashinsky equation using the Pseudo-Spectral/Fast Fourier Transform method.
 
@@ -314,7 +340,7 @@ end
 
 
 """
-    elementwise_pseudo_spectral_model(model, μ) → A, F    
+$(SIGNATURES)
 
 Generate A, F matrices for the Kuramoto-Sivashinsky equation using the Fast Fourier Transform method (element-wise).
 
@@ -340,7 +366,7 @@ end
 
 
 """
-    spectral_galerkin_model(model, μ) → A, F
+$(SIGNATURES)
     
 Generate A, F matrices for the Kuramoto-Sivashinsky equation using the Spectral-Galerkin method.
 
@@ -413,74 +439,18 @@ function spectral_galerkin_model(model::KuramotoSivashinskyModel, μ::Float64)
 end
 
 
-# """
-# $(SIGNATURES)
-
-# Integrator using Crank-Nicholson Adams-Bashforth method for (FD)
-
-# # Arguments
-# - `A`: A matrix
-# - `F`: F matrix
-# - `tdata`: temporal points
-# - `IC`: initial condition
-# - `const_stepsize`: whether to use a constant time step size
-# - `u2_lm1`: u2 at j-2
-
-# # Returns
-# - `u`: state matrix
-# """
-# function integrate_finite_diff_model(A, F, tdata, IC; const_stepsize=true, u2_lm1=nothing)
-#     Xdim = length(IC)
-#     Tdim = length(tdata)
-#     u = zeros(Xdim, Tdim)
-#     u[:, 1] = IC
-#     # u2_lm1 = Vector{Float64}()  # u2 at j-2 placeholder
-
-#     if const_stepsize
-#         Δt = tdata[2] - tdata[1]  # assuming a constant time step size
-#         ImdtA_inv = Matrix(1.0I(Xdim) - Δt/2 * A) \ 1.0I(Xdim) # |> sparse
-#         IpdtA = (1.0I(Xdim) + Δt/2 * A)
-
-#         @inbounds for j in 2:Tdim
-#             # u2 = vech(u[:, j-1] * u[:, j-1]')
-#             u2 = u[:, j-1] ⊘ u[:, j-1]
-#             if j == 2 && isnothing(u2_lm1)
-#                 u[:, j] = ImdtA_inv * (IpdtA * u[:, j-1] + F * u2 * Δt)
-#             else
-#                 u[:, j] = ImdtA_inv * (IpdtA * u[:, j-1] + F * u2 * 3*Δt/2 - F * u2_lm1 * Δt/2)
-#             end
-#             u2_lm1 = u2
-#         end
-#     else
-#         @inbounds for j in 2:Tdim
-#             Δt = tdata[j] - tdata[j-1]
-#             # u2 = vech(u[:, j-1] * u[:, j-1]')
-#             u2 = u[:, j-1] ⊘ u[:, j-1]
-#             if j == 2 && isnothing(u2_lm1)
-#                 u[:, j] = (1.0I(Xdim) - Δt/2 * A) \ ((1.0I(Xdim) + Δt/2 * A) * u[:, j-1] + F * u2 * Δt)
-#             else
-#                 u[:, j] = (1.0I(Xdim) - Δt/2 * A) \ ((1.0I(Xdim) + Δt/2 * A) * u[:, j-1] + F * u2 * 3*Δt/2 - F * u2_lm1 * Δt/2)
-#             end
-#             u2_lm1 = u2
-#         end
-#     end
-#     return u
-# end
-
-
 """
 $(SIGNATURES)
 
 Integrator using Crank-Nicholson Adams-Bashforth method for (FD). 
-This is a dispatch function for `integrate_FD(A, F, tdata, IC; const_stepsize=true, u2_lm1=nothing)`.
-Using the operator struct `ops` instead of `A` and `F`.
 
 # Arguments
 - `tdata`: temporal points
 - `IC`: initial condition
 
 # Keyword Arguments
-- `operators`: operators struct
+- `linear_matrix`: linear matrix
+- `quadratic_matrix`: quadratic matrix
 - `const_stepsize`: whether to use a constant time step size
 - `u2_jm1`: u2 at j-1
 
@@ -488,9 +458,11 @@ Using the operator struct `ops` instead of `A` and `F`.
 - `u`: state matrix
 """
 function integrate_finite_diff_model(tdata, IC, args...; kwargs...)
-    @assert haskey(kwargs, :operators) "Operators are required"
+    @assert haskey(kwargs, :linear_matrix) "Linear matrix is required"
+    @assert haskey(kwargs, :quadratic_matrix) "Quadratic matrix is required"
     @assert haskey(kwargs, :const_stepsize) "Constant step size is required"
-    A, F = kwargs[:operators] 
+    A = kwargs[:linear_matrix]
+    F = kwargs[:quadratic_matrix]
     const_stepsize = kwargs[:const_stepsize]
 
     Xdim = length(IC)

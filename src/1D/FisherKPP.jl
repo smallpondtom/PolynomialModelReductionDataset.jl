@@ -74,6 +74,11 @@ mutable struct FisherKPPModel <: AbstractModel
 end
 
 
+"""
+$(SIGNATURES)
+
+Constructor for the Fisher-KPP model
+"""
 function FisherKPPModel(;spatial_domain::Tuple{Real,Real}, time_domain::Tuple{Real,Real}, Δx::Real, Δt::Real, 
                         params::Dict{Symbol,<:Union{AbstractArray{<:Real},Real}}, BC::Symbol=:periodic)
     # Discritization grid info
@@ -104,7 +109,7 @@ end
 
 
 """
-    finite_diff_model(model::fisherkpp, D::Real, r::Real)
+$(SIGNATURES)
 
 Create the matrices A (linear operator) and F (quadratic operator) for the Fisher-KPP model. For different
 boundary conditions, the matrices are created differently.
@@ -128,6 +133,8 @@ end
 
 """
 $(SIGNATURES)
+
+Create the matrices A (linear operator) and F (quadratic operator) for the Fisher-KPP model with periodic boundary condition.
 """
 function finite_diff_periodic_model(N::Real, Δx::Real, params::Dict)
     D = params[:D]
@@ -151,6 +158,8 @@ end
 
 """
 $(SIGNATURES)
+
+Create the matrices A (linear operator), F (quadratic operator), and B (control operator) for the Fisher-KPP model with Dirichlet boundary condition.
 """
 function finite_diff_dirichlet_model(N::Real, Δx::Real, params::Dict)
     D = params[:D]
@@ -177,6 +186,8 @@ end
 
 """
 $(SIGNATURES)
+
+Create the matrices A (linear operator), F (quadratic operator), and B (control operator) for the Fisher-KPP model with mixed boundary condition.
 """
 function finite_diff_mixed_model(N::Real, Δx::Real, params::Dict)
     D = params[:D]
@@ -205,7 +216,7 @@ end
 """
 $(SIGNATURES)
     
-Integrate the Fisher-KPP model using the Crank-Nicholson (linear) Explicit (nonlinear) method.
+Integrate the Fisher-KPP model using the Crank-Nicholson (linear) Explicit (nonlinear) method with control.
 Or Semi-Implicit Crank-Nicholson (SICN) method.
 """
 function integrate_model_without_control_SICN(tdata, u0; linear_matrix, quadratic_matrix, const_stepsize=false)
@@ -371,6 +382,34 @@ function integrate_model_without_control_CNAB(tdata, u0; linear_matrix, quadrati
 end
 
 
+"""
+$(SIGNATURES)
+
+Integrate the Fisher-KPP model using the Semi-Implicit Crank-Nicholson (SICN) method and Crank-Nicholson Adam-Bashforth (CNAB) method.
+
+# Arguments
+- `tdata::AbstractArray{T}`: time data
+- `u0::AbstractArray{T}`: initial condition
+- `input::AbstractArray{T}=[]`: input data
+
+# Keyword Arguments
+- `linear_matrix::AbstractArray{T,2}`: linear matrix
+- `quadratic_matrix::AbstractArray{T,2}`: quadratic matrix
+- `control_matrix::AbstractArray{T,2}`: control matrix
+- `system_input::Bool=false`: system input flag
+- `const_stepsize::Bool=false`: constant step size flag
+- `u2_jm1::AbstractArray{T}=[]`: previous state
+- `integrator_type::Symbol=:CNAB`: integrator type
+
+# Returns
+- `u::Array{T,2}`: integrated model states
+
+# Notes
+- The `integrator_type` can be either `:SICN` for Semi-Implicit Crank-Nicolson or `:CNAB` for Crank-Nicolson Adam-Bashforth
+- The `system_input` flag is set to `false` if no input is provided
+- The `const_stepsize` flag is set to `false` by default
+- The `u2_jm1` is the previous state of the system
+"""
 function integrate_model(tdata::AbstractArray{T}, u0::AbstractArray{T}, input::AbstractArray{T}=T[]; kwargs...) where {T<:Real}
     # Check that keyword exists in kwargs
     @assert haskey(kwargs, :linear_matrix) "Keyword :linear_matrix not found"

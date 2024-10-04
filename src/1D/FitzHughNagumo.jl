@@ -15,7 +15,7 @@ export FitzHughNagumoModel
 """
 $(TYPEDEF)
 
-FitzHugh-Nagumo PDE model
+FitzHugh-Nagumo model
     
 ```math
 \\begin{aligned}

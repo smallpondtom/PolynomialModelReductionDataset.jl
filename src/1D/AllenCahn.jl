@@ -16,6 +16,7 @@ export AllenCahnModel
 """
 $(TYPEDEF)
 
+Allen-Cahn equation Model
     
 ```math
 \\frac{\\partial u}{\\partial t} =  \\mu\\frac{\\partial^2 u}{\\partial x^2} - \\epsilon(u^3 - u)
@@ -72,6 +73,11 @@ mutable struct AllenCahnModel <: AbstractModel
 end
 
 
+"""
+$(SIGNATURES)
+
+Constructor for the Allen-Cahn equation model.
+"""
 function AllenCahnModel(;spatial_domain::Tuple{Real,Real}, time_domain::Tuple{Real,Real}, Δx::Real, Δt::Real, 
                     params::Dict{Symbol,<:Union{Real,AbstractArray{<:Real}}}, BC::Symbol=:periodic)
     # Discritization grid info
@@ -104,7 +110,7 @@ end
 
 
 """
-    finite_diff_model(model::AllenCahnModel, μ::Real)
+$(SIGNATURES)
 
 Create the matrices A (linear operator) and E (cubic operator) for the Allen-Cahn model.
 
@@ -126,7 +132,7 @@ end
 
 
 """
-    finite_diff_periodic_model(N::Real, Δx::Real, μ::Real, ϵ::Real)
+$(SIGNATURES)
 
 Create the matrices A (linear operator) and E (cubic operator) for the Chafee-Infante model.
 
@@ -198,7 +204,7 @@ end
 
 
 """
-    finite_diff_mixed_model(N::Real, Δx::Real, params::Dict)
+$(SIGNATURES)
 
 Create the matrices A (linear operator), B (input operator), and E (cubic operator) for Chafee-Infante 
 model using the mixed boundary condition. If the spatial domain is [0,1], then we assume u(0,t) to be 
@@ -244,8 +250,8 @@ end
 """
 $(SIGNATURES)
     
-Integrate the Chafee-Infante model using the Crank-Nicholson (linear) Explicit (nonlinear) method.
-Or Semi-Implicit Crank-Nicholson (SICN) method.
+Integrate the Allen-Cahn model using the Crank-Nicholson (linear) Explicit (nonlinear) method.
+Or, in other words, Semi-Implicit Crank-Nicholson (SICN) method without control.
 """
 function integrate_model_without_control_SICN(tdata, u0; linear_matrix, cubic_matrix, const_stepsize=false)
     xdim = length(u0)
@@ -278,8 +284,8 @@ end
 """
 $(SIGNATURES)
     
-Integrate the Chafee-Infante model using the Crank-Nicholson (linear) Explicit (nonlinear) method.
-Or Semi-Implicit Crank-Nicholson (SICN) method with control input
+Integrate the Allen-Cahn model using the Crank-Nicholson (linear) Explicit (nonlinear) method.
+Or Semi-Implicit Crank-Nicholson (SICN) method with control input.
 """
 function integrate_model_with_control_SICN(tdata, u0, input; linear_matrix, cubic_matrix, 
                                            control_matrix, const_stepsize=false)
@@ -318,7 +324,7 @@ end
 """
 $(SIGNATURES)
 
-Integrate the Chafee-Infante model using the Crank-Nicholson (linear) Adam-Bashforth (nonlinear) method (CNAB).
+Integrate the Allen-Cahn model using the Crank-Nicholson (linear) Adam-Bashforth (nonlinear) method (CNAB) with control.
 """
 function integrate_model_with_control_CNAB(tdata, u0, input; linear_matrix, cubic_matrix, 
                                            control_matrix, const_stepsize=false, u3_jm1=nothing)
@@ -368,7 +374,7 @@ end
 """
 $(SIGNATURES)
 
-Integrate the Chafee-Infante model using the Crank-Nicholson (linear) Adam-Bashforth (nonlinear) method (CNAB)
+Integrate the Allen-Cahn model using the Crank-Nicholson (linear) Adam-Bashforth (nonlinear) method (CNAB)
 without control.
 """
 function integrate_model_without_control_CNAB(tdata, u0; linear_matrix, cubic_matrix, 
@@ -410,6 +416,34 @@ function integrate_model_without_control_CNAB(tdata, u0; linear_matrix, cubic_ma
 end
 
 
+"""
+$(SIGNATURES)
+
+Integrate the Allen-Cahn model using the Crank-Nicholson (linear) Adam-Bashforth (nonlinear) method (CNAB) or
+Semi-Implicit Crank-Nicolson (SICN) method.
+
+# Arguments
+- `tdata::AbstractArray{T}`: time data
+- `u0::AbstractArray{T}`: initial condition
+- `input::AbstractArray{T}=[]`: input data
+
+# Keyword Arguments
+- `linear_matrix::AbstractArray{T,2}`: linear matrix
+- `cubic_matrix::AbstractArray{T,2}`: cubic matrix
+- `control_matrix::AbstractArray{T,2}`: control matrix
+- `system_input::Bool=false`: system input flag
+- `const_stepsize::Bool=false`: constant step size flag
+- `u3_jm1::AbstractArray{T}=[]`: previous cubic term
+
+# Returns
+- `x::Array{T,2}`: integrated model states
+
+# Notes
+- If `system_input` is true, then `control_matrix` must be provided.
+- If `const_stepsize` is true, then the time step size is assumed to be constant.
+- If `u3_jm1` is provided, then the cubic term at the previous time step is used.
+- `integrator_type` can be either `:SICN` for Semi-Implicit Crank-Nicolson or `:CNAB` for Crank-Nicolson Adam-Bashforth
+"""
 function integrate_model(tdata::AbstractArray{T}, u0::AbstractArray{T}, input::AbstractArray{T}=T[]; kwargs...) where {T<:Real}
     # Check that keyword exists in kwargs
     @assert haskey(kwargs, :linear_matrix) "Keyword :linear_matrix not found"

@@ -156,7 +156,7 @@ $(SIGNATURES)
 
 Finite Difference Model for 1D Heat Equation with Dirichlet boundary condition.
 """
-function finite_diff_dirichlet_model(N::Real, Δx::Real, μ::Real; same_on_both_ends::Bool)
+function finite_diff_dirichlet_model(N::Real, Δx::Real, μ::Real; same_on_both_ends::Bool=true)
     A = diagm(0 => (-2)*ones(N), 1 => ones(N-1), -1 => ones(N-1)) * μ / Δx^2
 
     if same_on_both_ends
@@ -188,9 +188,11 @@ Integrate the 1D Heat Equation Model using 3 different methods:
 - `u::AbstractArray{T}=[]`: input data
 
 # Keyword Arguments
-- `operators`: operators A and B
+- `linear_matrix::AbstractArray{T,2}`: linear matrix
+- `control_matrix::AbstractArray{T,2}`: control matrix
 - `system_input::Bool=false`: system input flag
 - `integrator_type::Symbol=:ForwardEuler`: integrator type
+- `same_on_both_ends::Bool=true`: same boundary (Dirichlet) condition on both ends
 
 # Returns
 - `x::Array{T,2}`: integrated model states

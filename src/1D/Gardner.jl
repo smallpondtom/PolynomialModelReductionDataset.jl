@@ -426,6 +426,40 @@ function integrate_model_without_control_CNAB(tdata, u0; linear_matrix, quadrati
 end
 
 
+"""
+$(SIGNATURES)
+
+Integrate the Gardner equation model using 2 different methods:
+- Semi-Implicit Crank-Nicolson (SICN)
+- Crank-Nicolson Adam-Bashforth (CNAB)
+with or without control
+
+# Arguments
+- `tdata::AbstractArray{T}`: time data
+- `u0::AbstractArray{T}`: initial condition
+- `input::AbstractArray{T}=[]`: input data
+
+# Keyword Arguments
+- `linear_matrix::AbstractArray{T,2}`: linear matrix
+- `quadratic_matrix::AbstractArray{T,2}`: quadratic matrix
+- `cubic_matrix::AbstractArray{T,2}`: cubic matrix
+- `control_matrix::AbstractArray{T,2}`: control matrix
+- `system_input::Bool=false`: system input
+- `const_stepsize::Bool=false`: constant step size
+- `u2_jm1::AbstractArray{T}=[]`: u2 at j-1
+- `u3_jm1::AbstractArray{T}=[]`: u3 at j-1
+- `integrator_type::Symbol=:CNAB`: integrator type
+
+# Returns
+- `u::AbstractArray{T}`: solution
+
+# Notes
+- `integrator_type` can be either `:SIE` for Semi-Implicit Euler or `:CNAB` for Crank-Nicolson Adam-Bashforth
+- If `system_input` is `true`, then the control matrix must be provided
+- If `const_stepsize` is `true`, then the time step size is assumed to be constant
+- `u2_jm1` and `u3_jm1` are the values of u2 and u3 at j-1
+"""
+
 function integrate_model(tdata::AbstractArray{T}, u0::AbstractArray{T}, input::AbstractArray{T}=T[]; kwargs...) where {T<:Real}
     # Check that keyword exists in kwargs
     @assert haskey(kwargs, :linear_matrix) "Keyword :linear_matrix not found"

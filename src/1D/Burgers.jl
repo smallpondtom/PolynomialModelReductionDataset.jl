@@ -149,9 +149,9 @@ end
 
 
 """
-    finite_diff_dirichlet_model(N::Real, Δx::Real, μ::Real) → A, B, F
+$(SIGNATURES)
 
-Generate A, B, F matrices for the Burgers' equation for Dirichlet boundary condition.
+Generate A, F, B matrices for the Burgers' equation for Dirichlet boundary condition.
 This is by default the non-conservative form.
 """
 function finite_diff_dirichlet_model(N::Real, Δx::Real, Δt::Real, μ::Float64; 
@@ -184,12 +184,12 @@ function finite_diff_dirichlet_model(N::Real, Δx::Real, Δt::Real, μ::Float64;
         B[end,2] = 1 / Δt
     end
 
-    return A, B, F
+    return A, F, B
 end
 
 
 """
-    finite_diff_periodic_nonconservative_model(N::Real, Δx::Real, μ::Real) → A, F
+$(SIGNATURES)
 
 Generate A, F matrices for the Burgers' equation for periodic boundary condition (Non-conservative).
 """
@@ -221,7 +221,7 @@ end
 
 
 """
-    finite_diff_periodic_conservative_model(N::Real, Δx::Real, μ::Real) → A, F
+$(SIGNATURES)
 
 Generate A, F matrices for the Burgers' equation for periodic boundary condition (Conservative form).
 """
@@ -256,7 +256,7 @@ end
 
 
 """
-    finite_diff_periodic_energy_preserving_model(N::Real, Δx::Real, μ::Float64) → A, F
+$(SIGNATURES)
 
 Generate A, F matrices for the Burgers' equation for periodic boundary condition (Energy preserving form).
 """
@@ -363,9 +363,13 @@ Integrate the viscous Burgers' equation model
 - `input::AbstractArray{T}=[]`: input data
 
 # Keyword Arguments
-- `operators`: operators A, F, B
+- `linear_matrix::AbstractArray{T}`: linear matrix
+- `quadratic_matrix::AbstractArray{T}`: quadratic matrix
+- `control_matrix::AbstractArray{T}=[]`: control matrix
 - `system_input::Bool=false`: system input flag
 - `integrator_type::Symbol=:ForwardEuler`: integrator type
+- `same_on_both_ends::Bool=false`: same (Dirichlet) boundary condition on both ends
+- `opposite_sign_on_ends::Bool=true`: opposite sign (Dirichlet) boundary condition on both ends
 
 # Returns
 - `u::Array{T,2}`: integrated model states
@@ -373,8 +377,6 @@ Integrate the viscous Burgers' equation model
 # Notes
 - Input is assumed to be a matrix of size (spatial dimension x time dimension).
   You will receive a warning if the input is a tall vector/column vector.
-- `operators` should be in the order of [A, B, F] if `system_input` is true. If 
-  `system_input` is false, then `operators` should be in the order of [A, F].
 """
 function integrate_model(tdata::AbstractArray{T}, u0::AbstractArray{T}, 
                          input::AbstractArray{T}=T[]; kwargs...) where {T<:Real}
