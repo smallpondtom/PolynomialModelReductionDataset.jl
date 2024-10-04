@@ -36,7 +36,7 @@ A, F = kse.finite_diff_model(kse, kse.diffusion_coeffs)
 #==================#
 ## Integrate Model
 #==================#
-U = kse.integrate_model(kse.tspan, u0, nothing; operators=[A, F], const_stepsize=true)
+U = kse.integrate_model(kse.tspan, u0, nothing; linear_matrix=A, quadratic_matrix=F, const_stepsize=true)
 
 #================#
 ## Plot Solution

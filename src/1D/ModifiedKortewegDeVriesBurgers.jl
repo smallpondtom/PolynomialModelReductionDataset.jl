@@ -126,6 +126,11 @@ function finite_diff_model(model::ModifiedKortewegDeVriesBurgersModel, params::D
 end
 
 
+"""
+$(SIGNATURES)
+
+Finite Difference Model for the Gardner equation with Dirichlet boundary condition (Non-conservative).
+"""
 function finite_diff_dirichlet_model(N::Real, Δx::Real, Δt::Real, params::Dict)
     @assert N >= 2 "N should be greater than or equal to 2"
 
@@ -175,7 +180,7 @@ end
 
 
 """
-    finite_diff_periodic_model(N::Real, Δx::Real, params::Dict) → A, E
+$(SIGNATURES)
 
 Generate A and E matrices for the Gardner equation for periodic boundary condition (Non-conservative).
 """
@@ -384,6 +389,34 @@ function integrate_model_without_control_CNAB(tdata, u0; linear_matrix, cubic_ma
 end
 
 
+"""
+$(SIGNATURES)
+
+Integrate the mKdVB model using Semi-Implicit Euler (SIE) or Crank-Nicolson Adam-Bashforth (CNAB) scheme with or without control
+
+# Arguments
+- `tdata::AbstractArray{T}`: time data
+- `u0::AbstractArray{T}`: initial condition
+- `input::AbstractArray{T}=[]`: input data
+
+# Keyword Arguments
+- `linear_matrix::AbstractArray{T,2}`: linear matrix
+- `cubic_matrix::AbstractArray{T,2}`: cubic matrix
+- `control_matrix::AbstractArray{T,2}`: control matrix
+- `system_input::Bool=false`: system input flag
+- `const_stepsize::Bool=false`: constant step size flag
+- `u3_jm1::AbstractArray{T,2}`: cubic matrix at j-1
+- `integrator_type::Symbol=:CNAB`: integrator type
+
+# Returns
+- `u::Array{T,2}`: integrated model states
+
+# Notes
+- If `system_input` is true, then `control_matrix` is required
+- If `const_stepsize` is true, then the time step size is assumed to be constant
+- If `u3_jm1` is provided, then the cubic matrix at j-1 is used in the integration
+- The integrator type can be either Semi-Implicit Euler (SIE) or Crank-Nicolson Adam-Bashforth (CNAB)
+"""
 function integrate_model(tdata::AbstractArray{T}, u0::AbstractArray{T}, input::AbstractArray{T}=T[]; kwargs...) where {T<:Real}
     # Check that keyword exists in kwargs
     @assert haskey(kwargs, :linear_matrix) "Keyword :linear_matrix not found"
