@@ -17,7 +17,7 @@ u_{xx} &= \frac{\partial^2 u(t,x)}{\partial x^2}
 \end{align}
 ```
 
-where $u(x,t)\in[0,L]$ is the temperature and $\mu$ is the thermal diffusivity parameter.  
+where $x\in[0,L]$ is the temperature and $\mu$ is the thermal diffusivity parameter.  
 
 ## Finite Difference Model
 
@@ -129,6 +129,8 @@ And this completes the finite difference model for the 1D heat equation. You can
 
 ## Example
 
+The example below uses the settings from [Peherstorfer2016](@cite).
+
 ```@example Heat1D
 using CairoMakie
 using LinearAlgebra
@@ -166,4 +168,10 @@ ax.xlabel = L"x"
 ax.ylabel = L"t"
 CairoMakie.Colorbar(fig2[1, 2], hm)
 display(fig2)
+```
+
+## API
+
+```@docs
+Heat1D
 ```

@@ -10,9 +10,9 @@ using Kronecker: ⊗
 using LinearAlgebra
 using PolynomialModelReductionDataset: FitzHughNagumoModel
 
-#=======================#
-## Model (Dirichlet BC)
-#=======================#
+#=================================#
+## Model (Dirichlet + Neumann BC)
+#=================================#
 Ω = (0.0, 1.0); dt = 1e-4; Nx = 2^9
 fhn = FitzHughNagumoModel(
     spatial_domain=Ω, time_domain=(0.0,4.0), Δx=(Ω[2] - 1/Nx)/Nx, Δt=dt,
