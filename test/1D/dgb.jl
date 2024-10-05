@@ -1,10 +1,10 @@
-@testset "Damping Gardner-Burgers equation" begin
+@testset "Damped Gardner-Burgers equation" begin
     #======================#
     ## Model (Periodic BC)
     #======================#
     Ω = (0.0, 3.0)
     Nx = 2^7; dt = 1e-3
-    dgb = pomoreda.DampingGardnerBurgersModel(
+    dgb = pomoreda.DampedGardnerBurgersModel(
         spatial_domain=Ω, time_domain=(0.0, 3.0), Δx=(Ω[2] + 1/Nx)/Nx, Δt=dt,
         params=Dict(:a => 1, :b => 3, :c => 5, :d => 0.2, :e => 0.5), BC=:periodic,
     )
@@ -37,7 +37,7 @@
     #=======================#
     Ω = (0.0, 3.0)
     Nx = 2^7; dt = 1e-3
-    dgb = pomoreda.DampingGardnerBurgersModel(
+    dgb = pomoreda.DampedGardnerBurgersModel(
         spatial_domain=Ω, time_domain=(0.0, 3.0), Δx=(Ω[2] + 1/Nx)/Nx, Δt=dt,
         params=Dict(:a => 1, :b => 3, :c => 5, :d => 0.2, :e => 0.5), BC=:dirichlet,
     )

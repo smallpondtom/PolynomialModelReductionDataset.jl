@@ -1,5 +1,5 @@
 """
-Damping Gardner-Burgers equation example
+Damped Gardner-Burgers equation example
 """
 
 #===========#
@@ -7,14 +7,14 @@ Damping Gardner-Burgers equation example
 #===========#
 using CairoMakie
 using LinearAlgebra
-using PolynomialModelReductionDataset: DampingGardnerBurgersModel
+using PolynomialModelReductionDataset: DampedGardnerBurgersModel
 
 #======================#
 ## Model (Periodic BC)
 #======================#
 Ω = (0.0, 3.0)
 Nx = 2^8; dt = 1e-3
-dgb = DampingGardnerBurgersModel(
+dgb = DampedGardnerBurgersModel(
     spatial_domain=Ω, time_domain=(0.0, 3.0), Δx=(Ω[2] + 1/Nx)/Nx, Δt=dt,
     params=Dict(:a => 1, :b => 3, :c => 5, :d => 0.2, :e => 0.5), BC=:periodic,
 )
@@ -56,7 +56,7 @@ display(fig2)
 #=======================#
 Ω = (0.0, 3.0)
 Nx = 2^8; dt = 1e-3
-dgb = DampingGardnerBurgersModel(
+dgb = DampedGardnerBurgersModel(
     spatial_domain=Ω, time_domain=(0.0, 3.0), Δx=(Ω[2] + 1/Nx)/Nx, Δt=dt,
     params=Dict(:a => 1, :b => 3, :c => 5, :d => 0.2, :e => 0.5), BC=:dirichlet,
 )

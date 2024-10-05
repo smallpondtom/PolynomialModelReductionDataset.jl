@@ -1,7 +1,7 @@
 """
-    Damping Gardner-Burgers (DGB) PDE model
+    Damped Gardner-Burgers (DGB) PDE model
 """
-module DampingGardnerBurgers
+module DampedGardnerBurgers
 
 using DocStringExtensions
 using LinearAlgebra
@@ -10,12 +10,12 @@ using UniqueKronecker
 
 import ..PolynomialModelReductionDataset: AbstractModel, adjust_input
 
-export DampingGardnerBurgersModel
+export DampedGardnerBurgersModel
 
 """
 $(TYPEDEF)
 
-Gardner equation model
+Damped Gardner-Burgers equation model
 
 ```math
 \\frac{\\partial u}{\\partial t} = -\\alpha\\frac{\\partial^3 u}{\\partial x^3} + \beta u\\frac{\\partial u}{\\partial x} + \\gamma u^2\\frac{\\partial u}{\\partial x} + \\delta \\frac{\\partial^2 u}{\\partial x^2} + \\epsilon u
@@ -38,7 +38,7 @@ Gardner equation model
 - `finite_diff_model::Function`: model using Finite Difference
 - `integrate_model::Function`: model integration
 """
-mutable struct DampingGardnerBurgersModel <: AbstractModel
+mutable struct DampedGardnerBurgersModel <: AbstractModel
     # Domains
     spatial_domain::Tuple{Real,Real}  # spatial domain
     time_domain::Tuple{Real,Real}  # temporal domain
@@ -74,7 +74,7 @@ $(SIGNATURES)
 
 Constructor for the Gardner equation model.
 """
-function DampingGardnerBurgersModel(;spatial_domain::Tuple{Real,Real}, time_domain::Tuple{Real,Real}, Δx::Real, Δt::Real, 
+function DampedGardnerBurgersModel(;spatial_domain::Tuple{Real,Real}, time_domain::Tuple{Real,Real}, Δx::Real, Δt::Real, 
                        params::Dict{Symbol,<:Union{Real,AbstractArray{<:Real}}}, BC::Symbol=:dirichlet)
     # Discritization grid info
     @assert BC ∈ (:periodic, :dirichlet, :neumann, :mixed, :robin, :cauchy, :flux) "Invalid boundary condition"
@@ -94,7 +94,7 @@ function DampingGardnerBurgersModel(;spatial_domain::Tuple{Real,Real}, time_doma
     param_dim = Dict([k => length(v) for (k, v) in params])
     param_domain = Dict([k => extrema(v) for (k,v) in params])
 
-    DampingGardnerBurgersModel(
+    DampedGardnerBurgersModel(
         spatial_domain, time_domain, param_domain,
         Δx, Δt, BC, IC, xspan, tspan, params,
         spatial_dim, time_dim, param_dim,
@@ -109,13 +109,13 @@ $(SIGNATURES)
 Finite Difference Model for Gardner equation
 
 ## Arguments
-- `model::DampingGardnerBurgersModel`: Gardner model
+- `model::DampedGardnerBurgersModel`: Gardner model
 - `params::Real`: params including a, b, c
 
 ## Returns
 - operators
 """
-function finite_diff_model(model::DampingGardnerBurgersModel, params::Dict)
+function finite_diff_model(model::DampedGardnerBurgersModel, params::Dict)
     if model.BC == :periodic
         return finite_diff_periodic_model(model.spatial_dim, model.Δx, params)
     elseif model.BC == :dirichlet
@@ -438,7 +438,7 @@ end
 """
 $(SIGNATURES)
 
-Integrate the Damping Gardner-Burgers model using 2 different methods:
+Integrate the Damped Gardner-Burgers model using 2 different methods:
 - Semi-Implicit Euler (SIE)
 - Crank-Nicolson Adam-Bashforth (CNAB)
 

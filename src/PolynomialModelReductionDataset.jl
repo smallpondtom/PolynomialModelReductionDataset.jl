@@ -22,7 +22,7 @@ include("utilities/adjust_input.jl")
 # 1D models
 include("1D/AllenCahn.jl")
 include("1D/Burgers.jl")
-include("1D/DampingGardnerBurgers.jl")
+include("1D/DampedGardnerBurgers.jl")
 include("1D/FisherKPP.jl")
 include("1D/FitzHughNagumo.jl")
 include("1D/Gardner.jl")
@@ -32,7 +32,7 @@ include("1D/ModifiedKortewegDeVries.jl")
 include("1D/ModifiedKortewegDeVriesBurgers.jl")
 using .AllenCahn: AllenCahnModel
 using .Burgers: BurgersModel
-using .DampingGardnerBurgers: DampingGardnerBurgersModel
+using .DampedGardnerBurgers: DampedGardnerBurgersModel
 using .Heat1D: Heat1DModel
 using .FisherKPP: FisherKPPModel
 using .FitzHughNagumo: FitzHughNagumoModel
