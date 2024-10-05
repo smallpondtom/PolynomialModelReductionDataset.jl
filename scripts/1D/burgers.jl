@@ -20,11 +20,10 @@ burgers = BurgersModel(
 )
 Ubc = rand(burgers.time_dim) # boundary condition
 
-
 #==================#
 ## Model Operators
 #==================#
-A, B, F = burgers.finite_diff_model(burgers, burgers.diffusion_coeffs; opposite_sign_on_ends=true)
+A, F, B = burgers.finite_diff_model(burgers, burgers.diffusion_coeffs; opposite_sign_on_ends=true)
 
 #============#
 ## Integrate

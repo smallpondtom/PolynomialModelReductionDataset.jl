@@ -261,7 +261,7 @@ function integrate_model_with_control_SICN(tdata, u0, input; linear_matrix, quad
     u[:, 1] = u0 
 
     A = linear_matrix
-    E = quadratic_matrix
+    F = quadratic_matrix
     B = control_matrix
 
     # Adjust the input

@@ -262,7 +262,7 @@ $(SIGNATURES)
 
 Semi-Implicit Euler scheme with control
 """
-function integrate_model_with_control(tdata, u0, input; linear_matrix, quadratic_matrix, 
+function integrate_model_with_control_SIE(tdata, u0, input; linear_matrix, quadratic_matrix, 
                                       cubic_matrix, control_matrix)
     xdim = length(u0)
     tdim = length(tdata)
@@ -274,11 +274,15 @@ function integrate_model_with_control(tdata, u0, input; linear_matrix, quadratic
     E = cubic_matrix
     B = control_matrix
 
+    # Adjust the input
+    input_dim = size(B, 2)  # Number of inputs
+    input = adjust_input(input, input_dim, tdim)
+
     for j in 2:tdim
         Δt = tdata[j] - tdata[j-1]
         u2 = u[:, j-1] ⊘ u[:, j-1]
         u3 = ⊘(u[:, j-1], 3)
-        u[:, j] = (1.0I(xdim) - Δt * A) \ (u[:, j-1] + F * u2 * Δt + E * u3 * Δt + B * input[j-1] * Δt)
+        u[:, j] = (1.0I(xdim) - Δt * A) \ (u[:, j-1] + F * u2 * Δt + E * u3 * Δt + B * input[:,j-1] * Δt)
     end
     return u
 end
@@ -352,7 +356,7 @@ $(SIGNATURES)
 
 Semi-Implicit Euler scheme without control
 """
-function integrate_model_without_control(tdata, u0; linear_matrix, quadratic_matrix, cubic_matrix)
+function integrate_model_without_control_SIE(tdata, u0; linear_matrix, quadratic_matrix, cubic_matrix)
     xdim = length(u0)
     tdim = length(tdata)
     u = zeros(xdim, tdim)

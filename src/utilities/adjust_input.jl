@@ -39,7 +39,7 @@ function adjust_input(input, input_dim, tdim; margin=2)
     # If none of the conditions are met, throw an error
     @debug "Size of input: $(size(input))"
     @debug "Input dimension: $(input_dim)"
-    @debug "Time dimension: $(tdim_)"
+    @debug "Time dimension: $(tdim)"
     error("Input dimensions are not compatible with input_dim and tdim_")
 end
 

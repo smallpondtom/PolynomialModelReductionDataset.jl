@@ -257,10 +257,14 @@ function integrate_model_with_control_SIE(tdata, u0, input; linear_matrix, cubic
     E = cubic_matrix
     B = control_matrix
 
+    # Adjust the input
+    input_dim = size(B, 2)  # Number of inputs
+    input = adjust_input(input, input_dim, tdim)
+
     for j in 2:tdim
         Δt = tdata[j] - tdata[j-1]
         u3 = ⊘(u[:, j-1], u[:, j-1], u[:, j-1])
-        u[:, j] = (1.0I(xdim) - Δt * A) \ (u[:, j-1] + E * u3 * Δt + B * input[j-1] * Δt)
+        u[:, j] = (1.0I(xdim) - Δt * A) \ (u[:, j-1] + E * u3 * Δt + B * input[:,j-1] * Δt)
     end
     return u
 end
@@ -452,29 +456,5 @@ function integrate_model(tdata::AbstractArray{T}, u0::AbstractArray{T}, input::A
         end
     end
 end
-
-# """
-#     integrate_model(ops, tdata, IC) → states
-
-# Semi-Implicit Euler scheme without control (dispatch)
-# """
-# function integrate_model(ops, tdata, IC)
-#     A = ops.A 
-#     F = ops.F 
-#     E = ops.E
-#     Xdim = length(IC)
-#     Tdim = length(tdata)
-#     state = zeros(Xdim, Tdim)
-#     state[:, 1] = IC
-
-#     for j in 2:Tdim
-#         Δt = tdata[j] - tdata[j-1]
-#         # state2 = vech(state[:, j-1] * state[:, j-1]')
-#         state2 = state[:, j-1] ⊘ state[:, j-1]
-#         state3 = ⊘(state[:, j-1], state[:, j-1], state[:, j-1])
-#         state[:, j] = (1.0I(Xdim) - Δt * A) \ (state[:, j-1] + F * state2 * Δt + E * state3 * Δt)
-#     end
-#     return state
-# end
 
 end
