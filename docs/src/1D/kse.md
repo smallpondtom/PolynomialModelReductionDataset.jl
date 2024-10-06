@@ -248,5 +248,10 @@ display(fig11)
 ## API
 
 ```@docs
-KuramotoSivashinsky
+PolynomialModelReductionDataset.KuramotoSivashinsky.KuramotoSivashinskyModel
+```
+
+```@autodocs
+Modules = [PolynomialModelReductionDataset.KuramotoSivashinsky]
+Order = [:module, :function, :macro]
 ```

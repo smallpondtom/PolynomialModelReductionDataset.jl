@@ -92,5 +92,10 @@ display(fig2)
 ## API
 
 ```@docs
-Heat2D
+PolynomialModelReductionDataset.Heat2D.Heat2DModel
+```
+
+```@autodocs
+Modules = [PolynomialModelReductionDataset.Heat2D]
+Order = [:module, :function, :macro]
 ```

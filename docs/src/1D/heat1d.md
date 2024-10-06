@@ -172,6 +172,17 @@ display(fig2)
 
 ## API
 
+All models are a subset of `AbstractModel`
+
 ```@docs
-Heat1D
+PolynomialModelReductionDataset.AbstractModel
+```
+
+```@docs
+PolynomialModelReductionDataset.Heat1D.Heat1DModel
+```
+
+```@autodocs
+Modules = [PolynomialModelReductionDataset.Heat1D]
+Order = [:module, :function, :macro]
 ```

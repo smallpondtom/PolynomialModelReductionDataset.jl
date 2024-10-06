@@ -230,5 +230,10 @@ display(fig2)
 ## API
 
 ```@docs
-Burgers
+PolynomialModelReductionDataset.Burgers.BurgersModel
+```
+
+```@autodocs
+Modules = [PolynomialModelReductionDataset.Burgers]
+Order = [:module, :function, :macro]
 ```

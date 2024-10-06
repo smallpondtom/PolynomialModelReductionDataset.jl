@@ -137,5 +137,10 @@ display(fig4)
 ## API
 
 ```@docs
-AllenCahn
+PolynomialModelReductionDataset.AllenCahn.AllenCahnModel
+```
+
+```@autodocs
+Modules = [PolynomialModelReductionDataset.AllenCahn]
+Order = [:module, :function, :macro]
 ```

@@ -1,5 +1,6 @@
 using Documenter
 using DocumenterCitations
+using CairoMakie
 using PolynomialModelReductionDataset
 
 ENV["JULIA_DEBUG"] = "Documenter"
@@ -29,13 +30,13 @@ PAGES = [
 bib = CitationBibliography(joinpath(@__DIR__, "src", "refs.bib"))
 
 makedocs(
-    sitename = "PolynomialModelReductionDataset.jl",
+    sitename = "PoMoReDa",
     clean = true, doctest = false, linkcheck = false,
     authors = "Tomoki Koike <tkoike45@gmail.com>",
     repo = Remotes.GitHub("smallpondtom", "PolynomialModelReductionDataset.jl"),
     format = Documenter.HTML(
         prettyurls = get(ENV, "CI", nothing) == "true",
-        edit_link = "https://github.com/smallpondtom/PolynomialModelReductionDataset.jl",
+        edit_link = "https://github.com/smallpondtom/PoMoReDa",
         assets=String[
             "assets/citations.css",
             "assets/favicon.ico",

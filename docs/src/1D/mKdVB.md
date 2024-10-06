@@ -88,5 +88,10 @@ display(fig4)
 ## API
 
 ```@docs
-ModifiedKortewegDeVriesBurgers
+PolynomialModelReductionDataset.ModifiedKortewegDeVriesBurgers.ModifiedKortewegDeVriesBurgersModel
+```
+
+```@autodocs
+Modules = [PolynomialModelReductionDataset.ModifiedKortewegDeVriesBurgers]
+Order = [:module, :function, :macro]
 ```

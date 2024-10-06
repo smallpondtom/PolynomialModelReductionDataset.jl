@@ -183,5 +183,10 @@ display(fig4)
 ## API
 
 ```@docs
-FisherKPP
+PolynomialModelReductionDataset.FisherKPP.FisherKPPModel
+```
+
+```@autodocs
+Modules = [PolynomialModelReductionDataset.FisherKPP]
+Order = [:module, :function, :macro]
 ```

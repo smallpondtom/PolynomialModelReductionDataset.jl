@@ -147,5 +147,10 @@ display(fig4)
 ## API
 
 ```@docs
-ModifiedKortewegDeVries
+PolynomialModelReductionDataset.ModifiedKortewegDeVries.ModifiedKortewegDeVriesModel
+```
+
+```@autodocs
+Modules = [PolynomialModelReductionDataset.ModifiedKortewegDeVries]
+Order = [:module, :function, :macro]
 ```

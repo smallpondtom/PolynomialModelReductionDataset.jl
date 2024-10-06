@@ -95,5 +95,10 @@ display(fig1)
 ## API
 
 ```@docs
-FitzHughNagumo
+PolynomialModelReductionDataset.FitzHughNagumo.FitzHughNagumoModel
+```
+
+```@autodocs
+Modules = [PolynomialModelReductionDataset.FitzHughNagumo]
+Order = [:module, :function, :macro]
 ```

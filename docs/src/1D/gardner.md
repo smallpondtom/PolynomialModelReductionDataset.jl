@@ -160,5 +160,10 @@ display(fig4)
 ## API
 
 ```@docs
-Gardner
+PolynomialModelReductionDataset.Gardner.GardnerModel
+```
+
+```@autodocs
+Modules = [PolynomialModelReductionDataset.Gardner]
+Order = [:module, :function, :macro]
 ```

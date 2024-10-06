@@ -90,5 +90,10 @@ display(fig4)
 ## API
 
 ```@docs
-DampedGardnerBurgers
+PolynomialModelReductionDataset.DampedGardnerBurgers.DampedGardnerBurgersModel
+```
+
+```@autodocs
+Modules = [PolynomialModelReductionDataset.DampedGardnerBurgers]
+Order = [:module, :function, :macro]
 ```
