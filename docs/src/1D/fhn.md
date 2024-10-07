@@ -89,7 +89,7 @@ CairoMakie.Colorbar(fig1[1, 2], hm1)
 ax2 = Axis(fig1[1, 3], xlabel="t", ylabel="x", title="x2")
 hm2 = CairoMakie.heatmap!(ax2, fhn.tspan[1:DS:end], fhn.xspan, X[gp+1:end, :]')
 CairoMakie.Colorbar(fig1[1, 4], hm2)
-display(fig1)
+fig1
 ```
 
 ## API

@@ -168,7 +168,7 @@ U = fisherkpp.integrate_model(
 fig3, _, sf = CairoMakie.surface(fisherkpp.xspan, fisherkpp.tspan[1:DS:end], U[:, 1:DS:end], 
     axis=(type=Axis3, xlabel=L"x", ylabel=L"t", zlabel=L"u(x,t)"))
 CairoMakie.Colorbar(fig3[1, 2], sf)
-display(fig3)
+fig3
 ```
 
 ```@example FisherKPP
@@ -177,7 +177,7 @@ fig4, ax, hm = CairoMakie.heatmap(fisherkpp.xspan, fisherkpp.tspan[1:DS:end], U[
 ax.xlabel = L"x"
 ax.ylabel = L"t"
 CairoMakie.Colorbar(fig4[1, 2], hm)
-display(fig4)
+fig4
 ```
 
 ## API

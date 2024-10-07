@@ -157,7 +157,7 @@ U = heat1d.integrate_model(
 fig1, _, sf = CairoMakie.surface(heat1d.xspan, heat1d.tspan, U, 
     axis=(type=Axis3, xlabel=L"x", ylabel=L"t", zlabel=L"u(x,t)"))
 CairoMakie.Colorbar(fig1[1, 2], sf)
-display(fig1)
+fig1
 ```
 
 
@@ -167,7 +167,7 @@ fig2, ax, hm = CairoMakie.heatmap(heat1d.xspan, heat1d.tspan, U)
 ax.xlabel = L"x"
 ax.ylabel = L"t"
 CairoMakie.Colorbar(fig2[1, 2], hm)
-display(fig2)
+fig2
 ```
 
 ## API

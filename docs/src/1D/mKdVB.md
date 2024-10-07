@@ -72,7 +72,7 @@ U = mKdV.integrate_model(
 fig3, _, sf = CairoMakie.surface(mKdV.xspan, mKdV.tspan[1:DS:end], U[:, 1:DS:end], 
     axis=(type=Axis3, xlabel=L"x", ylabel=L"t", zlabel=L"u(x,t)"))
 CairoMakie.Colorbar(fig3[1, 2], sf)
-display(fig3)
+fig3
 ```
 
 ```@example mKdVB
@@ -81,7 +81,7 @@ fig4, ax, hm = CairoMakie.heatmap(mKdV.xspan, mKdV.tspan[1:DS:end], U[:, 1:DS:en
 ax.xlabel = L"x"
 ax.ylabel = L"t"
 CairoMakie.Colorbar(fig4[1, 2], hm)
-display(fig4)
+fig4
 
 ```
 

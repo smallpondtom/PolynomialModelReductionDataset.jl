@@ -78,7 +78,7 @@ fig1 = Figure()
 ax1 = Axis3(fig1[1, 1], xlabel="x", ylabel="y", zlabel="u(x,y,t)")
 sf = surface!(ax1, heat2d.xspan, heat2d.yspan, U2d[1])
 Colorbar(fig1[1, 2], sf)
-display(fig1)
+fig1
 ```
 
 ```@example Heat2D
@@ -86,7 +86,7 @@ fig2 = Figure()
 ax2 = Axis3(fig2[1, 1], xlabel="x", ylabel="y", zlabel="u(x,y,t)")
 sf = surface!(ax2, heat2d.xspan, heat2d.yspan, U2d[end])
 Colorbar(fig2[1, 2], sf)
-display(fig2)
+fig2
 ```
 
 ## API

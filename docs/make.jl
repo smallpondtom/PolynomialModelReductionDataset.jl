@@ -36,7 +36,7 @@ makedocs(
     repo = Remotes.GitHub("smallpondtom", "PolynomialModelReductionDataset.jl"),
     format = Documenter.HTML(
         prettyurls = get(ENV, "CI", nothing) == "true",
-        edit_link = "https://github.com/smallpondtom/PolynomialModelReductionDataset.jl",
+        edit_link = "https://github.com/smallpondtom/PoMoReDa",
         assets=String[
             "assets/citations.css",
             "assets/favicon.ico",

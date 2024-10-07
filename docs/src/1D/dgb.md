@@ -75,7 +75,7 @@ U = dgb.integrate_model(
 fig3, _, sf = CairoMakie.surface(dgb.xspan, dgb.tspan[1:DS:end], U[:, 1:DS:end], 
     axis=(type=Axis3, xlabel=L"x", ylabel=L"t", zlabel=L"u(x,t)"))
 CairoMakie.Colorbar(fig3[1, 2], sf)
-display(fig3)
+fig3
 ```
 
 ```@example DGB
@@ -84,7 +84,7 @@ fig4, ax, hm = CairoMakie.heatmap(dgb.xspan, dgb.tspan[1:DS:end], U[:, 1:DS:end]
 ax.xlabel = L"x"
 ax.ylabel = L"t"
 CairoMakie.Colorbar(fig4[1, 2], hm)
-display(fig4)
+fig4
 ```
 
 ## API
