@@ -1,23 +1,5 @@
-```@raw html
-<h1 align="center">
-  <img src="https://github.com/smallpondtom/PoMoReDa/blob/main/logo/PoMoReDa_small.png?raw=true" alt="PoMoReDa Logo" width=600/>
-</h1>
-```
+# Polynomial Model Reduction Dataset
 
-[![Powered by ACE Lab](https://img.shields.io/badge/powered%20by-ACE%20Lab-pink)](
-https://sites.google.com/view/elizabeth-qian/research/ace-group)
-[![Contributors](https://img.shields.io/github/contributors/smallpondtom/PoMoReDa)](
-https://github.com/smallpondtom/PoMoReDa/graphs/contributors)
-[![License](https://img.shields.io/github/license/smallpondtom/PoMoReDa)](
-https://github.com/smallpondtom/PoMoReDa/blob/main/license.txt)
-<!-- [![Doc](https://img.shields.io/badge/docs-stable-blue.svg)](https://smallpondtom.github.io/UniqueKronecker.jl/stable)
-[![Doc](https://img.shields.io/badge/docs-dev-green.svg)](https://smallpondtom.github.io/UniqueKronecker.jl/dev) -->
-[![Operator Inference Paper](https://img.shields.io/badge/DOI-10.1038%2Fs41592--019--0686--2-blue)](
-http://dx.doi.org/10.1016/j.cma.2016.03.025)
-[![Lift & Learn Paper](https://img.shields.io/badge/DOI-10.1038%2Fs41592--019--0686--2-blue)](
-https://doi.org/10.1016/j.physd.2020.132401)
-
-## Polynomial Model Reduction Dataset
 This GitHub repo includes various polynomial structured ordinary differential equations (ODEs) models and its dataset derived from large-scale partial differential equations (PDEs).
 The polynomial models are defined by
 
@@ -53,36 +35,6 @@ The main goal of this package is to accelerate the development of novel model re
 | Gardner | $u_t = -\alpha u_{xxx} + \beta uu_{x} + \gamma u^2u_{x}$ | periodic, Dirichlet |
 | Damped Gardner-Burgers' | $u_t = -\alpha u_{xxx} + \beta uu_x + \gamma u^2u_x + \delta u_{xx} + \epsilon u$ |  periodic, Dirichlet |
 | 2D Heat | $u_t = \mu(u_{xx} + u_{yy})$ | Dirichlet |
-
-## Gallery
-
-### Viscous Burgers' Equation
-
-```@raw
-<p align="center">
-  <img alt="burgers-surface" src="../../../gallery/burgers_surface.png" width="45%">
-&nbsp; &nbsp; &nbsp; &nbsp;
-  <img alt="burgers-heatmap" src="../../../gallery/burgers_heatmap.png" width="45%">
-</p>
-```
-
-### Kuramoto-Sivashinsky Equation
-
-```@raw
-<p align="center">
-  <img alt="kse-surface" src="../../../gallery/kse_surface.png" width="45%">
-&nbsp; &nbsp; &nbsp; &nbsp;
-  <img alt="kse-heatmap" src="../../../gallery/kse_heatmap.png" width="45%">
-</p>
-```
-
-### 2D Heat Equation
-
-```@raw
-<p align="center">
-  <img alt="heat2d-gif" src="../../../gallery/heat2d.gif" width="90%">
-</p>
-```
 
 
 ## Non-Redundant Expressions
