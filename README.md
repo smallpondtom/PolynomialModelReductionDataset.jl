@@ -37,6 +37,16 @@ We call the $A,~F,~H,~B$ matrices the operators of the system, and these operato
 This package constructs these operators for a given set of parameters and allows you to numerically integrate the system to collect the solution data for PDEs.
 The main goal of this package is to accelerate the development of novel model reduction approaches by making these models and dataset available to everyone.
 
+## Installation
+
+You can install it using the command
+
+```julia
+using Pkg
+Pkg.add("PolynomialModelReductionDataset")
+using PolynomialModelReductionDataset
+```
+
 ## Currently Offered Models
 
 | Model | Equation | Boundary Conditions |
