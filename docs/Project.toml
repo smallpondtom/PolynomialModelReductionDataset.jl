@@ -5,6 +5,7 @@ DocumenterCitations = "daee34ce-89f3-4625-b898-19384cb65244"
 DocumenterTools = "35a29f4d-8980-5a13-9543-d66fff28ecb8"
 Kronecker = "2c470bb0-bcc8-11e8-3dad-c9649493f05e"
 PolynomialModelReductionDataset = "e73a8ff0-27fc-4bea-a65d-4cea79111efd"
+SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 UniqueKronecker = "dd29a912-d12a-442e-ae57-6933397c0393"
 
 [compat]
