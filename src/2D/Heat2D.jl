@@ -18,7 +18,7 @@ $(TYPEDEF)
 2 Dimensional Heat Equation Model
 
 ```math
-\\frac{\\partial u}{\\partial t} = \\mu\\frac{\\partial^2 u}{\\partial x^2}
+\\frac{\\partial u}{\\partial t} = \\mu\\left(\\frac{\\partial^2 u}{\\partial x^2} + \\frac{\\partial^2 u}{\\partial y^2}\\right)
 ```
 
 ## Fields

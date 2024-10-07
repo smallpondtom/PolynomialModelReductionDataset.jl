@@ -10,13 +10,13 @@ u_t + \alpha u_{xxx} + \beta u^2u_{x} = 0
 
 Where:
 
-- `` u(x, t) `` is a scalar function representing the wave profile at position \( x \) and time \( t \).
+- `` u(x, t) `` is a scalar function representing the wave profile at position `` x `` and time `` t ``.
 - ``\alpha`` and ``\beta`` are parameters.
 
 ## Key Features
 
-- **Nonlinearity**: The term \( u^2 \frac{\partial u}{\partial x} \) introduces cubic nonlinearity, leading to rich dynamics.
-- **Dispersion**: The third-order derivative \( \frac{\partial^3 u}{\partial x^3} \) accounts for dispersive effects.
+- **Nonlinearity**: The term `` u^2 \frac{\partial u}{\partial x} `` introduces cubic nonlinearity, leading to rich dynamics.
+- **Dispersion**: The third-order derivative `` \frac{\partial^3 u}{\partial x^3} `` accounts for dispersive effects.
 - **Integrability**: The mKdV equation is integrable via the inverse scattering transform (IST), similar to the KdV equation.
 
 ## Physical Interpretation
@@ -43,8 +43,8 @@ Where:
 
   Where:
 
-  - \( v \) is the velocity of the soliton.
-  - \( x_0 \) is the initial position.
+  - `` v `` is the velocity of the soliton.
+  - `` x_0 `` is the initial position.
 
 ### Miura Transformation
 
@@ -54,7 +54,7 @@ Where:
   u = w_x + w^2
   ```
 
-  Where \( w \) satisfies the KdV equation. This transformation maps solutions of the mKdV equation to solutions of the KdV equation, linking their integrable structures.
+  Where `` w `` satisfies the KdV equation. This transformation maps solutions of the mKdV equation to solutions of the KdV equation, linking their integrable structures.
 
 ## Generalizations
 

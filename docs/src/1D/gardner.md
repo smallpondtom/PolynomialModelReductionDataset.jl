@@ -12,13 +12,13 @@ u_t = -\alpha u_{xxx} + \beta uu_x + \gamma u^2 u_{x}
 
 Where:
 
-- `` u(x, t) `` is the wave profile at position \( x \) and time \( t \).
-- `` \alpha ``, \( \beta \), and \( \gamma \) are constants representing the strengths of the linear and nonlinear terms and dispersion, respectively.
+- `` u(x, t) `` is the wave profile at position `` x `` and time `` t ``.
+- `` \alpha ``, `` \beta ``, and `` \gamma `` are constants representing the strengths of the linear and nonlinear terms and dispersion, respectively.
 
 ## Key Features
 
-- **Combination of Nonlinearities**: The Gardner equation includes both quadratic (\( u \frac{\partial u}{\partial x} \)) and cubic (\( u^2 \frac{\partial u}{\partial x} \)) nonlinear terms, bridging the KdV and mKdV equations.
-- **Dispersion**: The term \( \alpha \frac{\partial^3 u}{\partial x^3} \) accounts for dispersive effects, crucial for balancing nonlinearity to form solitons.
+- **Combination of Nonlinearities**: The Gardner equation includes both quadratic (`` u \frac{\partial u}{\partial x} ``) and cubic (`` u^2 \frac{\partial u}{\partial x} ``) nonlinear terms, bridging the KdV and mKdV equations.
+- **Dispersion**: The term `` \alpha \frac{\partial^3 u}{\partial x^3} `` accounts for dispersive effects, crucial for balancing nonlinearity to form solitons.
 - **Integrability**: The equation is integrable via the inverse scattering transform (IST), indicating the existence of multi-soliton solutions and infinite conservation laws.
 - **Soliton Interactions**: Models complex interactions between solitons, including the fusion and fission of solitary waves.
 
@@ -40,7 +40,7 @@ Where:
 
   Where:
 
-  - `` A ``, \( B \), and \( k \) are constants determined by \( \alpha \), \( \beta \), \( \gamma \), and the soliton parameters.
+  - `` A ``, `` B ``, and `` k `` are constants determined by `` \alpha ``, `` \beta ``, `` \gamma ``, and the soliton parameters.
   - `` v `` is the velocity of the soliton.
   - `` x_0 `` is the initial position.
 
@@ -56,7 +56,7 @@ Where:
     u_{\mathrm{KdV}} = u_{\mathrm{mKdV}}^2 + \lambda u_{{\mathrm{mKdV}}_x}
     ```
 
-    Where \( \lambda \) is a parameter.
+    Where `` \lambda `` is a parameter.
 
 - **Bäcklund Transformations**: Used to generate new solutions from known ones, further illustrating the integrable nature of the equation.
 
@@ -123,12 +123,12 @@ using PolynomialModelReductionDataset: GardnerModel
 Nx = 2^8; dt = 1e-3
 gardner = GardnerModel(
     spatial_domain=Ω, time_domain=(0.0, 3.0), Δx=(Ω[2] + 1/Nx)/Nx, Δt=dt,
-    params=Dict(:a => 1, :b => 3, :c => 5), BC=:dirichlet,
+    params=Dict(:a => -0.397, :b => -1.0278, :c => -0.18151), BC=:dirichlet,
 )
 DS = 100
-gardner.IC = 2 * cos.(2π * gardner.xspan / (Ω[2] - Ω[1])) # + 0.5 * cos.(4π * gardner.xspan / (Ω[2] - Ω[1]))
-Ubc1 = 0.5ones(1,gardner.time_dim)
-Ubc2 = -0.5ones(1,gardner.time_dim)
+gardner.IC = cos.(2π * gardner.xspan / (Ω[2] - Ω[1])) # + 0.5 * cos.(4π * gardner.xspan / (Ω[2] - Ω[1]))
+Ubc1 = ones(1,gardner.time_dim)
+Ubc2 = -ones(1,gardner.time_dim)
 Ubc = [Ubc1; Ubc2]
 
 # Operators

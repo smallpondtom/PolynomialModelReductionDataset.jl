@@ -23,9 +23,9 @@ u_t = \Delta u - F'(u)
 
 1. __Gradient Flow__: the Allen-Cahn equation is the $L_2$-gradient flow of the Ginzburg-Landau energy functional:
 
-    ```math
-    E(u) = \int \left( \frac{1}{2}|\nabla u|^2 + F(u) \right)dx
-    ```
+   ```math
+   E(u) = \int \left( \frac{1}{2}|\nabla u|^2 + F(u) \right)dx
+   ```
 
     This means the evolution of $u$ seeks to decrease the energy $E(u)$ over time.
 2. __Connection to Mean Curvature Flow__: in the sharp interface limit (when the interface thickness tends to zero), the motion of the interface approximates mean curvature flow. This links the Allen-Cahn equation to geometric PDEs and has significant implications in differential geometry.

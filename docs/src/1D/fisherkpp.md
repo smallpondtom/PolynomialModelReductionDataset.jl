@@ -12,7 +12,7 @@ u_t = D u_{xx} + r u (1 - u)
 
 Where:
 
-- `` u(x, t) `` is the density of the species or the frequency of an advantageous gene at position \( x \) and time \( t \).
+- `` u(x, t) `` is the density of the species or the frequency of an advantageous gene at position `` x `` and time `` t ``.
 - `` D `` is the diffusion coefficient, representing spatial dispersal.
 - `` r `` is the intrinsic growth rate of the population.
 
@@ -20,7 +20,7 @@ Where:
 
 - **Reaction-Diffusion System**: Combines local reactions (logistic growth) and spatial diffusion.
 - **Nonlinearity**: The term `` r u (1 - u) `` introduces nonlinearity, leading to complex dynamics like traveling waves.
-- **Traveling Wave Solutions**: Admits solutions of the form \( u(x, t) = U(x - c t) \), representing waves propagating at constant speed \( c \).
+- **Traveling Wave Solutions**: Admits solutions of the form `` u(x, t) = U(x - c t) ``, representing waves propagating at constant speed `` c ``.
 
 ### Physical Interpretation
 
@@ -32,7 +32,7 @@ Where:
 
 #### Traveling Wave Solutions
 
-- Seeking solutions of the form \( u(x, t) = U(z) \) with \( z = x - c t \), the equation becomes an ordinary differential equation (ODE):
+- Seeking solutions of the form `` u(x, t) = U(z) `` with `` z = x - c t ``, the equation becomes an ordinary differential equation (ODE):
 
   ```math
   -c \frac{dU}{dz} = D \frac{d^2 U}{dz^2} + r U (1 - U)
@@ -46,7 +46,7 @@ Where:
 
 - **Minimum Wave Speed**:
 
-  The minimum speed \( c_{\text{min}} \) at which traveling waves propagate is:
+  The minimum speed `` c_{\text{min}} `` at which traveling waves propagate is:
 
   ```math
   c_{\text{min}} = 2 \sqrt{D r}
@@ -54,18 +54,18 @@ Where:
 
 #### Stability and Asymptotic Behavior
 
-- **Stability of Traveling Waves**: Waves traveling at speeds \( c \geq c_{\text{min}} \) are stable.
-- **Asymptotic Spread**: The population front advances at speed \( c_{\text{min}} \) over long times.
+- **Stability of Traveling Waves**: Waves traveling at speeds `` c \geq c_{\text{min}} `` are stable.
+- **Asymptotic Spread**: The population front advances at speed `` c_{\text{min}} `` over long times.
 
 #### Linearization Near Zero
 
-- Near \( u = 0 \), the equation can be linearized:
+- Near `` u = 0 ``, the equation can be linearized:
 
   ```math
   \frac{\partial u}{\partial t} \approx D \frac{\partial^2 u}{\partial x^2} + r u
   ```
 
-- Solutions grow exponentially if \( u > 0 \), leading to the invasion of the population.
+- Solutions grow exponentially if `` u > 0 ``, leading to the invasion of the population.
 
 ### Applications
 
@@ -82,7 +82,7 @@ Where:
   \frac{\partial u}{\partial t} = D \nabla^2 u + r u (1 - u)
   ```
 
-- **Heterogeneous Media**: Incorporating spatially varying parameters \( D(x) \) and \( r(x) \).
+- **Heterogeneous Media**: Incorporating spatially varying parameters `` D(x) `` and `` r(x) ``.
 - **Time-Delayed Reactions**: Introducing delays in the reaction term to model maturation time.
 
 ## Model

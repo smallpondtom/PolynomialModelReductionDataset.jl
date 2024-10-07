@@ -58,12 +58,12 @@ display(fig2)
 Nx = 2^8; dt = 1e-3
 gardner = GardnerModel(
     spatial_domain=Ω, time_domain=(0.0, 3.0), Δx=(Ω[2] + 1/Nx)/Nx, Δt=dt,
-    params=Dict(:a => 1, :b => 3, :c => 5), BC=:dirichlet,
+    params=Dict(:a => -0.397, :b => -1.0278, :c => -0.18151), BC=:dirichlet,
 )
 DS = 100
-gardner.IC = 2 * cos.(2π * gardner.xspan / (Ω[2] - Ω[1])) # + 0.5 * cos.(4π * gardner.xspan / (Ω[2] - Ω[1]))
-Ubc1 = 0.5ones(1,gardner.time_dim)
-Ubc2 = -0.5ones(1,gardner.time_dim)
+gardner.IC = cos.(2π * gardner.xspan / (Ω[2] - Ω[1])) # + 0.5 * cos.(4π * gardner.xspan / (Ω[2] - Ω[1]))
+Ubc1 = ones(1,gardner.time_dim)
+Ubc2 = -ones(1,gardner.time_dim)
 Ubc = [Ubc1; Ubc2]
 
 #==================#

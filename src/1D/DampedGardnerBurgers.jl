@@ -18,7 +18,7 @@ $(TYPEDEF)
 Damped Gardner-Burgers equation model
 
 ```math
-\\frac{\\partial u}{\\partial t} = -\\alpha\\frac{\\partial^3 u}{\\partial x^3} + \beta u\\frac{\\partial u}{\\partial x} + \\gamma u^2\\frac{\\partial u}{\\partial x} + \\delta \\frac{\\partial^2 u}{\\partial x^2} + \\epsilon u
+\\frac{\\partial u}{\\partial t} = -\\alpha\\frac{\\partial^3 u}{\\partial x^3} + \\beta u\\frac{\\partial u}{\\partial x} + \\gamma u^2\\frac{\\partial u}{\\partial x} + \\delta \\frac{\\partial^2 u}{\\partial x^2} + \\epsilon u
 ```
 
 ## Fields

@@ -18,7 +18,7 @@ $(TYPEDEF)
 Modified Korteweg-de Vries-Burgers equation model
 
 ```math
-\\frac{\\partial u}{\\partial t} = -\\alpha\\frac{\\partial^3 u}{\\partial x^3} - \beta u^2\\frac{\\partial u}{\\partial x} + \\gamma\\frac{\\partial^2 u}{\\partial x^2}
+\\frac{\\partial u}{\\partial t} = -\\alpha\\frac{\\partial^3 u}{\\partial x^3} - \\beta u^2\\frac{\\partial u}{\\partial x} + \\gamma\\frac{\\partial^2 u}{\\partial x^2}
 ```
 
 ## Fields
