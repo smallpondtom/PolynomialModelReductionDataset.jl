@@ -10,6 +10,7 @@ https://github.com/smallpondtom/PoMoReDa/graphs/contributors)
 https://github.com/smallpondtom/PoMoReDa/blob/main/license.txt)
 [![Doc](https://img.shields.io/badge/docs-stable-blue.svg)](https://smallpondtom.github.io/PolynomialModelReductionDataset.jl/stable)
 [![Doc](https://img.shields.io/badge/docs-dev-green.svg)](https://smallpondtom.github.io/PolynomialModelReductionDataset.jl/dev)
+[![codecov](https://codecov.io/gh/smallpondtom/PolynomialModelReductionDataset.jl/graph/badge.svg?token=7ZZ5X0GD2H)](https://codecov.io/gh/smallpondtom/PolynomialModelReductionDataset.jl)
 [![Operator Inference Paper](https://img.shields.io/badge/DOI-10.1038%2Fs41592--019--0686--2-blue)](
 http://dx.doi.org/10.1016/j.cma.2016.03.025)
 [![Lift & Learn Paper](https://img.shields.io/badge/DOI-10.1038%2Fs41592--019--0686--2-blue)](
