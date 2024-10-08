@@ -216,7 +216,7 @@ function finite_diff_periodic_model(N::Real, Δx::Real, params::Dict)
     # push!(indices, (N-1,N,N,N))
     # push!(indices, (N,N,1,N))
     # values = β / 2 / Δx * ones(length(indices))
-    # E = makePolyOp_parallel(N, indices, values; nonredundant=true, symmetric=false)
+    # E = makePolyOp(N, indices, values; nonredundant=true, symmetric=false)
 
     S = Int(N * (N + 1) * (N + 2) / 6)
     if N >= 3
