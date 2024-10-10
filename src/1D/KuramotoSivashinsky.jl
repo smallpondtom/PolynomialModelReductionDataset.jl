@@ -705,7 +705,7 @@ function jacobian(x::AbstractVector{T}; kwargs...) where {T}
     @assert haskey(kwargs, :quadratic_matrix) "Quadratic matrix is required"
     A = kwargs[:linear_matrix]
     F = kwargs[:quadratic_matrix]
-    return A + F * elimat(n) * (1.0I(n) ⊛ x)
+    return A + F * elimat(n, 2) * (1.0I(n) ⊛ x)
 end
 
 end
