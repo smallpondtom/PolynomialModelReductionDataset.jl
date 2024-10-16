@@ -17,7 +17,7 @@ using UniqueKronecker: invec
 Nx = 2^5
 Ny = 2^5
 heat2d = Heat2DModel(
-    spatial_domain=Ω, time_domain=(0,2), 
+    spatial_domain=Ω, time_domain=(0,0.5), 
     Δx=(Ω[1][2] + 1/Nx)/Nx, Δy=(Ω[2][2] + 1/Ny)/Ny, Δt=1e-3,
     diffusion_coeffs=0.1, BC=(:dirichlet, :dirichlet)
 )

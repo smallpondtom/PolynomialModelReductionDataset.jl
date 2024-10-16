@@ -109,21 +109,36 @@ function Heat2DModel(;spatial_domain::Tuple{Tuple{Real,Real},Tuple{Real,Real}}, 
 end
 
 
-function finite_diff_dirichlet_model(Nx::Real, Ny::Real, Δx::Real, Δy::Real, μ::Real)
+function finite_diff_dirichlet_model(Nx::Integer, Ny::Integer, Δx::Real, Δy::Real, μ::Real)
     # A matrix
     Ax = spdiagm(0 => (-2)*ones(Nx), 1 => ones(Nx-1), -1 => ones(Nx-1)) * μ / Δx^2
     Ay = spdiagm(0 => (-2)*ones(Ny), 1 => ones(Ny-1), -1 => ones(Ny-1)) * μ / Δy^2
     A = (Ay ⊗ I(Nx)) + (I(Ny) ⊗ Ax)
 
     # B matrix (different inputs for each boundary)
-    Bx = spzeros(Nx*Ny,2)
-    Bx[1:Ny,1] .= μ / Δx^2
-    Bx[end-Ny+1:end,2] .= μ / Δx^2
-    By = spzeros(Nx*Ny,2)
-    idx = [Ny*(n-1)+1 for n in 1:Nx]
-    By[idx,1] .= μ / Δy^2
-    idx = [Ny*n for n in 1:Nx]
-    By[idx,2] .= μ / Δy^2
+    # Bx matrix (left and right boundaries)
+    Bx = spzeros(Nx*Ny, 2)
+
+    # Left boundary indices (x = 0)
+    left_indices = [ (j - 1) * Nx + 1 for j in 1:Ny ]
+    Bx[left_indices, 1] .= μ / Δx^2
+
+    # Right boundary indices (x = Lx)
+    right_indices = [ (j - 1) * Nx + Nx for j in 1:Ny ]
+    Bx[right_indices, 2] .= μ / Δx^2
+
+    # By matrix (bottom and top boundaries)
+    By = spzeros(Nx*Ny, 2)
+
+    # Bottom boundary indices (y = 0)
+    bottom_indices = [ i for i in 1:Nx ]
+    By[bottom_indices, 1] .= μ / Δy^2
+
+    # Top boundary indices (y = Ly)
+    top_indices = [ (Ny - 1) * Nx + i for i in 1:Nx ]
+    By[top_indices, 2] .= μ / Δy^2
+
+    # Combine B matrices
     B = hcat(Bx, By)
 
     return A, B
