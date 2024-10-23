@@ -39,16 +39,16 @@ A, B = heat2d.finite_diff_model(heat2d, heat2d.diffusion_coeffs)
 ## Forward Euler
 #================#
 U = heat2d.integrate_model(
-    heat2d.tspan, heat2d.IC, Ubc; 
-    operators=[A,B], system_input=true, integrator_type=:ForwardEuler
+    heat2d.tspan, heat2d.IC, Ubc; linear_matrix=A, control_matrix=B, 
+    system_input=true, integrator_type=:ForwardEuler
 )
 
 #=================#
 ## Backward Euler
 #=================#
 U = heat2d.integrate_model(
-    heat2d.tspan, heat2d.IC, Ubc; 
-    operators=[A,B], system_input=true, integrator_type=:BackwardEuler
+    heat2d.tspan, heat2d.IC, Ubc; linear_matrix=A, control_matrix=B,
+    system_input=true, integrator_type=:BackwardEuler
 )
 
 #==================#
@@ -75,8 +75,8 @@ end
 ## Crank-Nicolson
 #=================#
 U = heat2d.integrate_model(
-    heat2d.tspan, heat2d.IC, Ubc; 
-    operators=[A,B], system_input=true, integrator_type=:CrankNicolson
+    heat2d.tspan, heat2d.IC, Ubc; linear_matrix=A, control_matrix=B, 
+    system_input=true, integrator_type=:CrankNicolson
 )
 
 #==================#

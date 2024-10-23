@@ -28,8 +28,8 @@
     ## Forward Euler
     #================#
     U = heat2d.integrate_model(
-        heat2d.tspan, heat2d.IC, Ubc; 
-        operators=[A,B], system_input=true, integrator_type=:ForwardEuler
+        heat2d.tspan, heat2d.IC, Ubc; linear_matrix=A, control_matrix=B, 
+        system_input=true, integrator_type=:ForwardEuler
     )
     @test size(U) == (prod(heat2d.spatial_dim), heat2d.time_dim)
 
@@ -37,8 +37,8 @@
     ## Backward Euler
     #=================#
     U = heat2d.integrate_model(
-        heat2d.tspan, heat2d.IC, Ubc; 
-        operators=[A,B], system_input=true, integrator_type=:BackwardEuler
+        heat2d.tspan, heat2d.IC, Ubc; linear_matrix=A, control_matrix=B,
+         system_input=true, integrator_type=:BackwardEuler
     )
     @test size(U) == (prod(heat2d.spatial_dim), heat2d.time_dim)
 
@@ -46,8 +46,8 @@
     ## Crank-Nicolson
     #=================#
     U = heat2d.integrate_model(
-        heat2d.tspan, heat2d.IC, Ubc; 
-        operators=[A,B], system_input=true, integrator_type=:CrankNicolson
+        heat2d.tspan, heat2d.IC, Ubc; linear_matrix=A, control_matrix=B, 
+        system_input=true, integrator_type=:CrankNicolson
     )
     @test size(U) == (prod(heat2d.spatial_dim), heat2d.time_dim)
 end

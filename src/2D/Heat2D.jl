@@ -225,12 +225,12 @@ Integrate the 1D Heat Equation Model using 3 different methods:
 function integrate_model(tdata::AbstractVector{T}, u0::AbstractVector{T},
                          input::AbstractArray{T}=T[]; kwargs...) where {T<:Real}
     # Check that keyword exists in kwargs
-    @assert haskey(kwargs, :operators) "Keyword :operators not found"
+    @assert haskey(kwargs, :linear_matrix) "Keyword :linear_matrix not found"
+    @assert haskey(kwargs, :control_matrix) "Keyword :control_matrix not found"
     @assert haskey(kwargs, :system_input) "Keyword :system_input not found"
     @assert haskey(kwargs, :integrator_type) "Keyword :integrator_type not found"
 
     # Unpack the keyword arguments
-    operators = kwargs[:operators]
     system_input = kwargs[:system_input]
     integrator_type = kwargs[:integrator_type]
 
@@ -242,13 +242,14 @@ function integrate_model(tdata::AbstractVector{T}, u0::AbstractVector{T},
 
     # Adjust input dimensions if system_input is true
     if system_input
-        A, B = operators
+        A = kwargs[:linear_matrix]
+        B = kwargs[:control_matrix]
         input_dim = size(B, 2)  # Number of inputs
 
         # Adjust the input
         input = adjust_input(input, input_dim, tdim)
     else
-        A = operators
+        A = kwargs[:linear_matrix]
     end
 
     # Integrate the model
