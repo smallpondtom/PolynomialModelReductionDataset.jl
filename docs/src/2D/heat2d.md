@@ -69,8 +69,8 @@ A, B = heat2d.finite_diff_model(heat2d, heat2d.diffusion_coeffs)
 
 # Integrate
 U = heat2d.integrate_model(
-    heat2d.tspan, heat2d.IC, Ubc; 
-    operators=[A,B], system_input=true, integrator_type=:BackwardEuler
+    heat2d.tspan, heat2d.IC, Ubc; linear_matrix=A, control_matrix=B, 
+    system_input=true, integrator_type=:BackwardEuler
 )
 
 U2d = invec.(eachcol(U), heat2d.spatial_dim...)
