@@ -83,13 +83,13 @@ function Heat2DModel(;spatial_domain::Tuple{Tuple{Real,Real},Tuple{Real,Real}}, 
     if BC[1] == :periodic
         xspan = collect(spatial_domain[1][1]:Δx:spatial_domain[1][2]-Δx)
     elseif BC[1] ∈ (:dirichlet, :neumann, :mixed, :robin, :cauchy) 
-        xspan = collect(spatial_domain[1][1]:Δx:spatial_domain[1][2])[2:end-1]
+        xspan = collect(spatial_domain[1][1]:Δx:spatial_domain[1][2])
     end
     # y-axis
     if BC[2] == :periodic
         yspan = collect(spatial_domain[2][1]:Δy:spatial_domain[2][2]-Δy)
     elseif BC[2] ∈ (:dirichlet, :neumann, :mixed, :robin, :cauchy) 
-        yspan = collect(spatial_domain[2][1]:Δy:spatial_domain[2][2])[2:end-1]
+        yspan = collect(spatial_domain[2][1]:Δy:spatial_domain[2][2])
     end
     tspan = collect(time_domain[1]:Δt:time_domain[2])
     spatial_dim = (length(xspan), length(yspan))

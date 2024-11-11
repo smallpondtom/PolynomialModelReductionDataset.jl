@@ -92,7 +92,7 @@ function Heat1DModel(;spatial_domain::Tuple{Real,Real}, time_domain::Tuple{Real,
     if BC == :periodic
         xspan = collect(spatial_domain[1]:Δx:spatial_domain[2]-Δx)
     elseif BC ∈ (:dirichlet, :neumann, :mixed, :robin, :cauchy) 
-        xspan = collect(spatial_domain[1]:Δx:spatial_domain[2])[2:end-1]
+        xspan = collect(spatial_domain[1]:Δx:spatial_domain[2])
     end
     tspan = collect(time_domain[1]:Δt:time_domain[2])
     spatial_dim = length(xspan)
