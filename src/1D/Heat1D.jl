@@ -158,7 +158,7 @@ $(SIGNATURES)
 Finite Difference Model for 1D Heat Equation with Dirichlet boundary condition.
 """
 function finite_diff_dirichlet_model(N::Real, Δx::Real, μ::Real; same_on_both_ends::Bool=true)
-    A = diagm(0 => (-2)*ones(N), 1 => ones(N-1), -1 => ones(N-1)) * μ / Δx^2
+    A = spdiagm(0 => (-2)*ones(N), 1 => ones(N-1), -1 => ones(N-1)) * μ / Δx^2
 
     if same_on_both_ends
         # Dirichlet boundary condition which is same at both ends
