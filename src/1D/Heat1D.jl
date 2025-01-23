@@ -5,6 +5,7 @@ module Heat1D
 
 using DocStringExtensions
 using LinearAlgebra
+using SparseArrays
 
 import ..PolynomialModelReductionDataset: AbstractModel, adjust_input
 
