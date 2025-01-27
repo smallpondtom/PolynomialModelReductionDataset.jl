@@ -7,12 +7,12 @@ The polynomial models are defined by
 \dot{x}(t) = Ax(t) + H(x(t) \otimes x(t)) + G(x(t) \otimes x(t) \otimes x(t)) + Bu(t)
 ```
 
-where 
+where
 - ``x \in \mathbb{R}^n``: state variable vector
 - ``u \in \mathbb{R}^m``: control input vector
 - ``A \in \mathbb{R}^{n \times n}``: linear system matrix
 - ``H \in \mathbb{R}^{n \times n^2}``: quadratic system matrix
-- ``G \in \mathbb{R}^{n \times n^3}``: cubic system matrix 
+- ``G \in \mathbb{R}^{n \times n^3}``: cubic system matrix
 - ``B \in \mathbb{R}^{n \times m}``: control/input matrix
 - ``\otimes``: Kronecker product
 
@@ -34,10 +34,10 @@ using PolynomialModelReductionDataset
 
 | Model | Equation | Boundary Conditions |
 | --- | --- | --- |
-| 1D Heat | $u_t = \mu u_{xx}$ | periodic, Dirichlet |
-| Viscous Burgers' | $u_t = \mu u_{xx} - uu_{x}$ | periodic, Dirichlet | 
-| FitzHugh-Nagumo | $\begin{align*} u_t &= \epsilon^2 u_{xx} + u(u-0.1)(1-u) - v + g \\ v_t &= hu + \gamma v + g \end{align*}$ | [Dirichlet and Neumann](https://morwiki.mpi-magdeburg.mpg.de/morwiki/index.php/FitzHugh-Nagumo_System) |
-| Fisher-KPP | $u_t = D u_{xx} + ru(1-u)$ | periodic, Dirichlet, Dirichlet and Neumann (mixed) | 
+| 1D Heat | $u_t = \mu u_{xx}$ | periodic, Dirichlet, mixed, Robin |
+| Viscous Burgers' | $u_t = \mu u_{xx} - uu_{x}$ | periodic, Dirichlet |
+| FitzHugh-Nagumo | $$\begin{align*} u_t &= \epsilon^2 u_{xx} + u(u-0.1)(1-u) - v + g \\ v_t &= hu + \gamma v + g \end{align*}$$ | [Dirichlet and Neumann](https://morwiki.mpi-magdeburg.mpg.de/morwiki/index.php/FitzHugh-Nagumo_System) |
+| Fisher-KPP | $u_t = D u_{xx} + ru(1-u)$ | periodic, Dirichlet, Dirichlet and Neumann (mixed) |
 | Allen-Cahn | $u_t = \mu u_{xx} - \epsilon(u - u^3)$ | periodic, Dirichlet, Dirichlet and Neumann (mixed) |
 | Kuramoto-Sivashinsky | $u_t = -\mu u_{xxxx} - u_{xx} - uu_x$ | periodic |
 | Modified Korteweg-de Vries | $u_t = -\alpha u_{xxx} - \beta u^2u_{xx}$ | periodic, Dirichlet |
@@ -46,10 +46,9 @@ using PolynomialModelReductionDataset
 | Damped Gardner-Burgers' | $u_t = -\alpha u_{xxx} + \beta uu_x + \gamma u^2u_x + \delta u_{xx} + \epsilon u$ |  periodic, Dirichlet |
 | 2D Heat | $u_t = \mu(u_{xx} + u_{yy})$ | Dirichlet |
 
-
 ## Non-Redundant Expressions
 
-In this package, you will see a slightly different version of operators from what is defined above. Those are operators including only the non-redundant terms which eliminate the redundancy coming from the symmetry of Kronecker products. For ease of exposition, we will only introduce the non-redundant operators. For more info, please see [this page](https://smallpondtom.github.io/UniqueKronecker.jl/dev/matrices/dynamicalsystem/). 
+In this package, you will see a slightly different version of operators from what is defined above. Those are operators including only the non-redundant terms which eliminate the redundancy coming from the symmetry of Kronecker products. For ease of exposition, we will only introduce the non-redundant operators. For more info, please see [this page](https://smallpondtom.github.io/UniqueKronecker.jl/dev/matrices/dynamicalsystem/).
 
 For the quadratic and cubic operators we define the non-redundant counterparts as follows:
 
@@ -71,5 +70,3 @@ Contributions are welcome! If you find a bug or have a feature request, please o
 ## License
 
 This project is licensed under the [MIT License](https://github.com/smallpondtom/PolynomialModelReductionDataset.jl/blob/main/LICENSE).
-
-

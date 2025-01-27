@@ -132,6 +132,8 @@ function finite_diff_model(model::Heat1DModel, μ::Real; kwargs...)
         return finite_diff_periodic_model(model.spatial_dim, model.Δx, μ)
     elseif model.BC == :dirichlet
         return finite_diff_dirichlet_model(model.spatial_dim, model.Δx, μ; kwargs...)
+    elseif model.BC == :neumann
+        return finite_diff_neumann_model(model.spatial_dim, model.Δx, μ)
     else
         error("Boundary condition not implemented")
     end
@@ -146,8 +148,8 @@ Finite Difference Model for 1D Heat Equation with periodic boundary condition.
 function finite_diff_periodic_model(N::Real, Δx::Real, μ::Real)
     # Create A matrix
     A = spdiagm(0 => (-2) * ones(N), 1 => ones(N - 1), -1 => ones(N - 1)) * μ / Δx^2
-    A[1, end] = 1 / Δx^2  # periodic boundary condition
-    A[end, 1] = 1 / Δx^2  
+    A[1, end] = μ / Δx^2  # periodic boundary condition
+    A[end, 1] = μ / Δx^2  
     return A
 end
 
@@ -171,6 +173,90 @@ function finite_diff_dirichlet_model(N::Real, Δx::Real, μ::Real; same_on_both_
         B[end,2] = μ / Δx^2
     end
 
+    return A, B
+end
+
+
+"""
+$(SIGNATURES)
+
+Finite difference model for the 1D Heat Equation with Neumann boundary condition.
+"""
+function finite_diff_neumann_model(N::Real, Δx::Real, μ::Real)
+    # Linear state matrix
+    A = spdiagm(0 => (-2)*ones(N), 1 => ones(N-1), -1 => ones(N-1)) * μ / Δx^2
+    A[1,1] = -1 * μ / Δx^2
+    A[end,end] = -1 * μ / Δx^2
+
+    # Input matrix for the boundary conditions
+    B = zeros(N,2)
+    B[1,1] = -μ / Δx
+    B[end,2] = μ / Δx
+    
+    return A, B
+end
+
+
+"""
+$(SIGNATURES)
+
+Finite difference model for the 1D Heat Equation with Mixed boundary condition.
+The mixed boundary condition is a combination of Neumann and Dirichlet boundary
+conditions. The left boundary is Neumann and the right boundary is Dirichlet when
+`order` is set to `["neumann", "dirichlet"]`. If `order` is set to `["dirichlet", "neumann"]`,
+then the left boundary is Dirichlet and the right boundary is Neumann.
+"""
+function finite_diff_mixed_model(N::Real, Δx::Real, μ::Real; order::Vector{<:String}=["neumann", "dirichlet"])
+    if order[1] == "neumann"  # Neumann (left) and Dirichlet (right)
+        # Linear state matrix
+        A = spdiagm(0 => (-2)*ones(N), 1 => ones(N-1), -1 => ones(N-1)) * μ / Δx^2
+        A[1,1] = -1 * μ / Δx^2
+
+        # Input matrix for the boundary conditions
+        B = zeros(N,2)
+        B[1,1] = -μ / Δx
+        B[end,2] = μ / Δx^2
+    else  # Dirichlet (left) and Neumann (right)
+        # Linear state matrix
+        A = spdiagm(0 => (-2)*ones(N), 1 => ones(N-1), -1 => ones(N-1)) * μ / Δx^2
+        A[end,end] = -1 * μ / Δx^2
+
+        # Input matrix for the boundary conditions
+        B = zeros(N,2)
+        B[1,1] = μ / Δx^2
+        B[end,2] = μ / Δx
+    end
+    
+    return A, B
+end
+
+
+"""
+$(SIGNATURES)
+
+Finite difference model for the 1D Heat Equation with Robin boundary condition. 
+The Robin boundary condition is a generalization of the Neumann and Dirichlet 
+boundary conditions, where the boundary condition is a linear combination of
+the state and its derivative. That is,
+
+```math
+\\alpha u(0) + (1 - \\alpha) u'(0) = g(t).
+```
+
+The weights `α` and `β` are used to adjust the boundary conditions at the left
+and right boundaries, respectively.
+"""
+function finite_diff_robin_model(N::Real, Δx::Real, μ::Real; α::Real=0.5, β::Real=0.5)
+    # Linear state matrix
+    A = spdiagm(0 => (-2)*ones(N), 1 => ones(N-1), -1 => ones(N-1)) * μ / Δx^2
+    A[1,1] += α / (α + α*Δx - Δx) * μ / Δx^2
+    A[end,end] += β / (β - β*Δx + Δx) * μ / Δx^2
+
+    # Input matrix for the boundary conditions
+    B = zeros(N,2)
+    B[1,1] = -Δx / (α + α*Δx - Δx) * μ / Δx^2
+    B[end,2] = Δx / (β - β*Δx + Δx) * μ / Δx^2
+    
     return A, B
 end
 
