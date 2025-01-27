@@ -134,6 +134,10 @@ function finite_diff_model(model::Heat1DModel, μ::Real; kwargs...)
         return finite_diff_dirichlet_model(model.spatial_dim, model.Δx, μ; kwargs...)
     elseif model.BC == :neumann
         return finite_diff_neumann_model(model.spatial_dim, model.Δx, μ)
+    elseif model.BC == :mixed
+        return finite_diff_mixed_model(model.spatial_dim, model.Δx, μ; kwargs...)
+    elseif model.BC == :robin
+        return finite_diff_robin_model(model.spatial_dim, model.Δx, μ; kwargs...)
     else
         error("Boundary condition not implemented")
     end
