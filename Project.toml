@@ -1,7 +1,7 @@
 name = "PolynomialModelReductionDataset"
 uuid = "e73a8ff0-27fc-4bea-a65d-4cea79111efd"
 authors = ["smallpondtom <tkoike45@gmail.com>"]
-version = "0.1.1"
+version = "0.1.2"
 
 [deps]
 DocStringExtensions = "ffbed154-4ef7-542d-bbb7-c09d3a79fcae"
