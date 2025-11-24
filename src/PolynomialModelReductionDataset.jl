@@ -20,7 +20,7 @@ abstract type AbstractModel end
 include("utilities/adjust_input.jl")
 
 # 1D models
-include("1D/AllenCahn.jl")
+include("1D/AllenCahn1D.jl")
 include("1D/Burgers.jl")
 include("1D/DampedGardnerBurgers.jl")
 include("1D/FisherKPP.jl")
@@ -28,9 +28,10 @@ include("1D/FitzHughNagumo.jl")
 include("1D/Gardner.jl")
 include("1D/Heat1D.jl")
 include("1D/KuramotoSivashinsky.jl")
+include("1D/Kawahara.jl")
 include("1D/ModifiedKortewegDeVries.jl")
 include("1D/ModifiedKortewegDeVriesBurgers.jl")
-using .AllenCahn: AllenCahnModel
+using .AllenCahn1D: AllenCahnModel
 using .Burgers: BurgersModel
 using .DampedGardnerBurgers: DampedGardnerBurgersModel
 using .Heat1D: Heat1DModel
@@ -38,11 +39,14 @@ using .FisherKPP: FisherKPPModel
 using .FitzHughNagumo: FitzHughNagumoModel
 using .Gardner: GardnerModel
 using .KuramotoSivashinsky: KuramotoSivashinskyModel
+using .Kawahara: KawaharaModel
 using .ModifiedKortewegDeVries: ModifiedKortewegDeVriesModel
 using .ModifiedKortewegDeVriesBurgers: ModifiedKortewegDeVriesBurgersModel
 
 # 2D models
 include("2D/Heat2D.jl")
+include("2D/AllenCahn2D.jl")
 using .Heat2D: Heat2DModel
+using .AllenCahn2D: AllenCahn2DModel
 
 end

@@ -12,16 +12,17 @@ using PolynomialModelReductionDataset: AllenCahnModel
 #======================#
 ## Model (Periodic BC)
 #======================#
-Ω = (0.0, 2.0)
-T = (0.0, 3.0)
-Nx = 2^8
+Ω = (0.0, 1.0)
+T = (0.0, 1.0)
+Nx = 100
 dt = 1e-3
 allencahn = AllenCahnModel(
     spatial_domain=Ω, time_domain=T, Δx=((Ω[2]-Ω[1]) + 1/Nx)/Nx, Δt=dt, 
     params=Dict(:μ => 0.01, :ϵ => 1.0), BC=:periodic
 )
 DS = 10
-allencahn.IC = exp.(-10 * cos.(π * allencahn.xspan).^2)
+# allencahn.IC = exp.(-10 * cos.(π * allencahn.xspan).^2)
+allencahn.IC = tanh.((allencahn.xspan .- 0.5) / 0.1)
 
 #==================#
 ## Model Operators

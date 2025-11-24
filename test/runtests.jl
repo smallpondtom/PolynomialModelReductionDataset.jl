@@ -23,10 +23,12 @@ defaultname(file) = uppercasefirst(replace(splitext(basename(file))[1], '_' => '
     testfile("1D/fhn.jl")
     testfile("1D/fisherkpp.jl")
     testfile("1D/gardner.jl")
+    testfile("1D/kawahara.jl")
     testfile("1D/kse.jl")
     testfile("1D/mKdV.jl")
     testfile("1D/mKdVB.jl")
 
     # 2D models
     testfile("2D/heat2d.jl")
+    testfile("2D/allencahn2d.jl")
 end

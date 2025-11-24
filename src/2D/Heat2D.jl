@@ -144,6 +144,29 @@ function finite_diff_dirichlet_model(Nx::Integer, Ny::Integer, Δx::Real, Δy::R
     return A, B
 end
 
+"""
+Construct A and B matrices for 2D heat equation with periodic boundary conditions.
+Returns (A, B) where B is empty (no boundary inputs for pure periodic BCs).
+"""
+function finite_diff_periodic_model(Nx::Integer, Ny::Integer, Δx::Real, Δy::Real, μ::Real)
+    # 1D periodic second-derivative (circulant) operators
+    Ax = spdiagm(0 => (-2)*ones(Nx), 1 => ones(Nx-1), -1 => ones(Nx-1))
+    Ax = sparse(Ax)
+    Ax[1, Nx] = 1
+    Ax[Nx, 1] = 1
+    Ax *= μ / Δx^2
+
+    Ay = spdiagm(0 => (-2)*ones(Ny), 1 => ones(Ny-1), -1 => ones(Ny-1))
+    Ay = sparse(Ay)
+    Ay[1, Ny] = 1
+    Ay[Ny, 1] = 1
+    Ay *= μ / Δy^2
+
+    # 2D Laplacian with periodic BC via Kronecker sums
+    A = (Ay ⊗ I(Nx)) + (I(Ny) ⊗ Ax)
+
+    return A
+end
 
 """
 $(SIGNATURES)
@@ -161,11 +184,12 @@ Generate A and B matrices for the 2D heat equation.
 function finite_diff_model(model::Heat2DModel, μ::Real)
     if all(model.BC .== :dirichlet)
         return finite_diff_dirichlet_model(model.spatial_dim..., model.Δx, model.Δy, μ)
+    elseif all(model.BC .== :periodic)
+        return finite_diff_periodic_model(model.spatial_dim..., model.Δx, model.Δy, μ)
     else
         error("Not implemented")
     end
 end
-
 
 
 """
@@ -199,7 +223,7 @@ end
 """
 $(SIGNATURES)
 
-Integrate the 1D Heat Equation Model using 3 different methods:
+Integrate the 2D Allen-Cahn Equation Model using 3 different methods:
 - Forward Euler
 - Backward Euler
 - Crank Nicolson
@@ -226,8 +250,10 @@ function integrate_model(tdata::AbstractVector{T}, u0::AbstractVector{T},
                          input::AbstractArray{T}=T[]; kwargs...) where {T<:Real}
     # Check that keyword exists in kwargs
     @assert haskey(kwargs, :linear_matrix) "Keyword :linear_matrix not found"
-    @assert haskey(kwargs, :control_matrix) "Keyword :control_matrix not found"
     @assert haskey(kwargs, :system_input) "Keyword :system_input not found"
+    if kwargs[:system_input]
+        @assert haskey(kwargs, :control_matrix) "Keyword :control_matrix not found"
+    end
     @assert haskey(kwargs, :integrator_type) "Keyword :integrator_type not found"
 
     # Unpack the keyword arguments
@@ -295,6 +321,5 @@ function integrate_model(tdata::AbstractVector{T}, u0::AbstractVector{T},
 
     return u
 end
-
 
 end

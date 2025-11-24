@@ -36,15 +36,17 @@ using PolynomialModelReductionDataset
 | --- | --- | --- |
 | 1D Heat | $u_t = \mu u_{xx}$ | periodic, Dirichlet, mixed, Robin |
 | Viscous Burgers' | $u_t = \mu u_{xx} - uu_{x}$ | periodic, Dirichlet |
-| FitzHugh-Nagumo | \begin{align*} u_t &= \epsilon^2 u_{xx} + u(u-0.1)(1-u) - v + g \\ v_t &= hu + \gamma v + g \end{align*} | [Dirichlet and Neumann](https://morwiki.mpi-magdeburg.mpg.de/morwiki/index.php/FitzHugh-Nagumo_System) |
+| FitzHugh-Nagumo | $$\begin{align*} u_t &= \epsilon^2 u_{xx} + u(u-0.1)(1-u) - v + g \\ v_t &= hu + \gamma v + g \end{align*}$$ | [Dirichlet and Neumann](https://morwiki.mpi-magdeburg.mpg.de/morwiki/index.php/FitzHugh-Nagumo_System) |
 | Fisher-KPP | $u_t = D u_{xx} + ru(1-u)$ | periodic, Dirichlet, Dirichlet and Neumann (mixed) |
 | Allen-Cahn | $u_t = \mu u_{xx} - \epsilon(u - u^3)$ | periodic, Dirichlet, Dirichlet and Neumann (mixed) |
 | Kuramoto-Sivashinsky | $u_t = -\mu u_{xxxx} - u_{xx} - uu_x$ | periodic |
+| Kawahara | $u_t = -\mu u_{xxxx} - u_{xx} - uu_x - \delta u_{xxx} - \nu u_{xxxxx}$ | periodic |
 | Modified Korteweg-de Vries | $u_t = -\alpha u_{xxx} - \beta u^2u_{xx}$ | periodic, Dirichlet |
 | Modified Korteweg-de Vries-Burgers | $u_t = -\alpha u_{xxx} - \beta u^2u_{xx} + \gamma u_{xx}$ | periodic, Dirichlet |
 | Gardner | $u_t = -\alpha u_{xxx} + \beta uu_{x} + \gamma u^2u_{x}$ | periodic, Dirichlet |
 | Damped Gardner-Burgers' | $u_t = -\alpha u_{xxx} + \beta uu_x + \gamma u^2u_x + \delta u_{xx} + \epsilon u$ |  periodic, Dirichlet |
-| 2D Heat | $u_t = \mu(u_{xx} + u_{yy})$ | Dirichlet |
+| 2D Heat | $u_t = \mu(u_{xx} + u_{yy})$ | periodic, Dirichlet |
+| 2D Allen-Cahn | $u_t = \mu(u_{xx} + u_{yy}) - \epsilon(u^3 - u)$ | periodic, Dirichlet |
 
 ## Non-Redundant Expressions
 

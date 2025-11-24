@@ -4,6 +4,7 @@ Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
 DocumenterCitations = "daee34ce-89f3-4625-b898-19384cb65244"
 DocumenterTools = "35a29f4d-8980-5a13-9543-d66fff28ecb8"
 Kronecker = "2c470bb0-bcc8-11e8-3dad-c9649493f05e"
+LiveServer = "16fef848-5104-11e9-1b77-fb7a48bbb589"
 PolynomialModelReductionDataset = "e73a8ff0-27fc-4bea-a65d-4cea79111efd"
 UniqueKronecker = "dd29a912-d12a-442e-ae57-6933397c0393"
 

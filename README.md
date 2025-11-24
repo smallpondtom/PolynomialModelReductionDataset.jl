@@ -57,11 +57,13 @@ using PolynomialModelReductionDataset
 | Fisher-KPP | $u_t = D u_{xx} + ru(1-u)$ | periodic, Dirichlet, Dirichlet and Neumann (mixed) | 
 | Allen-Cahn | $u_t = \mu u_{xx} - \epsilon(u - u^3)$ | periodic, Dirichlet, Dirichlet and Neumann (mixed) |
 | Kuramoto-Sivashinsky | $u_t = -\mu u_{xxxx} - u_{xx} - uu_x$ | periodic |
+| Kawahara | $u_t = -\mu u_{xxxx} - u_{xx} - uu_x - \delta u_{xxx} - \nu u_{xxxxx}$ | periodic |
 | Modified Korteweg-de Vries | $u_t = -\alpha u_{xxx} - \beta u^2u_{xx}$ | periodic, Dirichlet |
 | Modified Korteweg-de Vries-Burgers | $u_t = -\alpha u_{xxx} - \beta u^2u_{xx} + \gamma u_{xx}$ | periodic, Dirichlet |
 | Gardner | $u_t = -\alpha u_{xxx} + \beta uu_{x} + \gamma u^2u_{x}$ | periodic, Dirichlet |
 | Damped Gardner-Burgers' | $u_t = -\alpha u_{xxx} + \beta uu_x + \gamma u^2u_x + \delta u_{xx} + \epsilon u$ |  periodic, Dirichlet |
-| 2D Heat | $u_t = \mu(u_{xx} + u_{yy})$ | Dirichlet |
+| 2D Heat | $u_t = \mu(u_{xx} + u_{yy})$ | periodic, Dirichlet |
+| 2D Allen-Cahn | $u_t = \mu(u_{xx} + u_{yy}) - \epsilon(u^3 - u)$ | periodic, Dirichlet |
 
 ## Gallery
 
