@@ -89,10 +89,30 @@ Colorbar(fig2[1, 2], sf)
 fig2
 ```
 
+## Fast Solvers (Backward Euler)
+
+As in addition, we also offer a fast implementation of the backward Euler method which utilizes the structure of the linear matrix $\mathbf{A}$ to solve the linear system at each time step more efficiently. This is done by precomputing a solver that exploits the Kronecker product structure of $\mathbf{A}$ and then using this solver to perform the integration. Solver precomputation is done by the `build_fast_be_solver` function and the integration is done by the `integrate_model_fast` function. This supports both the Dirichlet and periodic boundary conditions. An example of using the fast solver is as follows.
+
+```julia
+# Dirichlet
+A, B = finite_diff_model(model, μ)
+U = ...                                  # boundary inputs, 4 × Tdim
+solver = build_fast_be_solver(model, μ)  # one-time precompute
+state = integrate_model_fast(solver, B, U, model.tspan, model.IC)
+
+# Periodic (no boundary inputs)
+state = integrate_model_fast(model, μ, model.tspan, model.IC)
+```
+
+
 ## API
 
 ```@docs
 PolynomialModelReductionDataset.Heat2D.Heat2DModel
+PolynomialModelReductionDataset.Heat2D.FastDirichletSolver
+PolynomialModelReductionDataset.Heat2D.FastPeriodicSolver
+PolynomialModelReductionDataset.Heat2D.build_fast_be_solver
+PolynomialModelReductionDataset.Heat2D.integrate_model_fast
 ```
 
 ```@autodocs

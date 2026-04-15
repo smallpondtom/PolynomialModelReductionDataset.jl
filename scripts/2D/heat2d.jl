@@ -8,7 +8,7 @@
 using CairoMakie
 using LinearAlgebra
 using Revise
-using PolynomialModelReductionDataset: Heat2DModel
+using PolynomialModelReductionDataset: Heat2DModel, build_fast_be_solver, integrate_model_fast
 using UniqueKronecker: invec
 
 #=======================#
@@ -47,10 +47,20 @@ U = heat2d.integrate_model(
 #=================#
 ## Backward Euler
 #=================#
-U = heat2d.integrate_model(
+t1 = @elapsed U = heat2d.integrate_model(
     heat2d.tspan, heat2d.IC, Ubc; linear_matrix=A, control_matrix=B,
     system_input=true, integrator_type=:BackwardEuler
 )
+
+#========================#
+## Backward Euler (Fast)
+#========================#
+μ = heat2d.diffusion_coeffs
+solver = build_fast_be_solver(heat2d, μ)  # one-time precompute
+t2 = @elapsed U_fast = integrate_model_fast(solver, B, Ubc, heat2d.tspan, heat2d.IC)
+
+# Verify fast implementation 
+println("Backward Euler rel. error: ", norm(U - U_fast) / norm(U))
 
 #==================#
 ## Animate Solution
@@ -122,12 +132,21 @@ heat2d.IC = vec(ux0)  # initial condition
 A = heat2d.finite_diff_model(heat2d, heat2d.diffusion_coeffs)
 
 #=================#
-## Crank-Nicolson
+## Backward Euler
 #=================#
-U = heat2d.integrate_model(
+t1 = @elapsed U = heat2d.integrate_model(
     heat2d.tspan, heat2d.IC; linear_matrix=A, 
     system_input=false, integrator_type=:BackwardEuler
 )
+
+#=================#
+## Backward Euler (Fast)
+#=================#
+μ = heat2d.diffusion_coeffs
+t2 = @elapsed U_fast = integrate_model_fast(heat2d, μ, heat2d.tspan, heat2d.IC)
+
+# Verify fast implementation
+println("Backward Euler rel. error: ", norm(U - U_fast) / norm(U))
 
 #==================#
 ## Animate Solution
