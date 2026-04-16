@@ -111,6 +111,7 @@ state = integrate_model_fast(model, μ, model.tspan, model.IC)
 PolynomialModelReductionDataset.Heat2D.Heat2DModel
 PolynomialModelReductionDataset.Heat2D.FastDirichletSolver
 PolynomialModelReductionDataset.Heat2D.FastPeriodicSolver
+PolynomialModelReductionDataset.Heat2D.FastDenseSolver
 PolynomialModelReductionDataset.Heat2D.build_fast_be_solver
 PolynomialModelReductionDataset.Heat2D.integrate_model_fast
 ```

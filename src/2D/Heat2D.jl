@@ -12,8 +12,8 @@ using SparseArrays
 import ..PolynomialModelReductionDataset: AbstractModel, adjust_input
 
 export Heat2DModel,
-       FastDirichletSolver, FastPeriodicSolver,
-       build_fast_be_solver, integrate_model_fast
+       FastDirichletSolver, FastPeriodicSolver, FastDenseSolver,
+       build_fast_be_solver, integrate_model_fast, update_timestep!
 
 """
 $(TYPEDEF)
@@ -444,6 +444,197 @@ function integrate_model_fast(model::Heat2DModel, μ::Real,
     return integrate_model_fast(solver,
                                 zeros(Xdim, 0), zeros(0, length(tdata)),
                                 tdata, IC)
+end
+
+
+# ============================================================================
+# Fast backward Euler for unstructured dense A (e.g. from a reduced-order model)
+# ----------------------------------------------------------------------------
+# Given a dense r×r matrix A (no Kronecker or sparsity structure), we
+# eigendecompose once:
+#       A = V Λ V⁻¹
+# Then:
+#       (I - Δt A)⁻¹ = V diag(1 / (1 - Δt λ_i)) V⁻¹
+#
+# We precompute M_inv = real(V D V⁻¹) as a single dense r×r matrix so that
+# each backward Euler step is a single BLAS-2 mul!(unew, M_inv, rhs).
+#
+# If Δt changes (e.g. adaptive stepping or parameter sweep), call
+# update_timestep!(solver, Δt_new) to rebuild M_inv in O(r²) without
+# repeating the O(r³) eigendecomposition.
+#
+# A may be non-symmetric; complex eigenvalues are handled transparently.
+# If A is nearly defective (κ(V) ≫ 1), the constructor issues a warning and
+# falls back to a direct LU-based inverse for robustness.
+# ============================================================================
+ 
+"""
+$(TYPEDEF)
+ 
+Fast backward Euler solver for a dense, unstructured matrix `A` (typically
+from a reduced-order model). Precomputes `(I - Δt A)⁻¹` via eigendecomposition
+so that each time step is a single dense matrix-vector multiply.
+ 
+## Fields
+$(TYPEDFIELDS)
+"""
+struct FastDenseSolver <: AbstractFastBESolver
+    "Precomputed (I - Δt A)⁻¹, real r×r matrix applied via mul! each step"
+    M_inv::Matrix{Float64}
+    "Eigenvectors of A (complex, stored for update_timestep!)"
+    V::Matrix{ComplexF64}
+    "Inverse of V (complex)"
+    Vinv::Matrix{ComplexF64}
+    "Eigenvalues of A (complex)"
+    λ::Vector{ComplexF64}
+    "Dimension of the system"
+    r::Int
+    "Whether the solver was constructed via eigendecomposition (false = LU fallback)"
+    eigen_based::Bool
+end
+ 
+ 
+"""
+$(SIGNATURES)
+ 
+Construct a fast backward Euler solver for a dense matrix `A`.
+ 
+Eigendecomposes `A` once and precomputes the full inverse
+`M_inv = real(V diag(1/(1 - Δt λ_i)) V⁻¹)`. If `A` is nearly defective
+(condition number of `V` exceeds `cond_threshold`), falls back to a direct
+`inv(I - Δt * A)` and prints a warning.
+ 
+## Arguments
+- `A::AbstractMatrix{<:Real}`: the system matrix (r × r)
+- `Δt::Real`: time step size
+ 
+## Keyword Arguments
+- `cond_threshold::Real=1e12`: condition number threshold for V; above this,
+  fall back to direct inverse
+"""
+function FastDenseSolver(A::AbstractMatrix{<:Real}, Δt::Real;
+                          cond_threshold::Real=1e12)
+    r = size(A, 1)
+    @assert size(A, 2) == r "A must be square, got size $(size(A))"
+ 
+    F = eigen(A)
+    V    = ComplexF64.(F.vectors)
+    Vinv = inv(V)
+    λ    = ComplexF64.(F.values)
+ 
+    κ = opnorm(V, 2) * opnorm(Vinv, 2)  # cond(V)
+ 
+    if κ > cond_threshold
+        @warn "Eigenvector matrix is ill-conditioned (κ(V) = $(round(κ; sigdigits=3))). " *
+              "Falling back to direct inverse of (I - Δt A) for robustness."
+        M_inv = real.(inv(I - Δt * A))
+        return FastDenseSolver(M_inv, V, Vinv, λ, r, false)
+    end
+ 
+    M_inv = _build_M_inv(V, Vinv, λ, Δt)
+    return FastDenseSolver(M_inv, V, Vinv, λ, r, true)
+end
+ 
+# Internal: compute real(V * Diag(d) * Vinv) with sanity check.
+function _build_M_inv(V::Matrix{ComplexF64}, Vinv::Matrix{ComplexF64},
+                       λ::Vector{ComplexF64}, Δt::Real)
+    d = 1.0 ./ (1.0 .- Δt .* λ)
+    M_inv_c = V * Diagonal(d) * Vinv
+    imag_norm = norm(imag.(M_inv_c))
+    real_norm = max(norm(real.(M_inv_c)), 1.0)
+    if imag_norm / real_norm > 1e-10
+        @warn "Precomputed inverse has unexpectedly large imaginary part " *
+              "(relative: $(round(imag_norm/real_norm; sigdigits=3))). " *
+              "Proceeding with real part only."
+    end
+    return real.(M_inv_c)
+end
+ 
+ 
+"""
+$(SIGNATURES)
+ 
+In-place backward Euler step for a dense unstructured system. Applies the
+precomputed `M_inv` as a single matrix-vector multiply.
+"""
+function backward_euler_solve!(unew::AbstractVector, F::FastDenseSolver,
+                                rhs::AbstractVector)
+    mul!(unew, F.M_inv, rhs)
+    return unew
+end
+ 
+ 
+"""
+$(SIGNATURES)
+ 
+Rebuild `M_inv` for a new time step `Δt_new` without repeating the
+eigendecomposition of `A`. Cost: O(r²).
+ 
+If the solver was constructed via the LU fallback (nearly defective `A`),
+this recomputes `inv(I - Δt_new A)` from the stored eigendecomposition
+anyway, which may be inaccurate; a warning is issued.
+"""
+function update_timestep!(solver::FastDenseSolver, Δt_new::Real)
+    if !solver.eigen_based
+        @warn "Solver was built via LU fallback due to ill-conditioned " *
+              "eigenvectors. update_timestep! uses the eigendecomposition " *
+              "regardless; results may be inaccurate."
+    end
+    solver.M_inv .= _build_M_inv(solver.V, solver.Vinv, solver.λ, Δt_new)
+    return solver
+end
+ 
+ 
+"""
+$(SIGNATURES)
+ 
+Integrate a reduced-order system `du/dt = A u + B f` using backward Euler
+with a precomputed `FastDenseSolver`.
+ 
+## Arguments
+- `solver::FastDenseSolver`: precomputed solver (from `FastDenseSolver(A, Δt)`)
+- `tdata::AbstractVector`: time points (uniform spacing must match solver Δt)
+- `u0::AbstractVector`: initial condition (length r)
+- `B::AbstractMatrix`: input matrix (r × m); pass `zeros(r,0)` if no input
+- `input::AbstractMatrix`: input signals (m × Tdim); pass `zeros(0,Tdim)` if no input
+ 
+## Returns
+- `u::Matrix{Float64}`: state trajectory (r × Tdim)
+"""
+function integrate_model_fast(solver::FastDenseSolver,
+                              tdata::AbstractVector, u0::AbstractVector,
+                              B::AbstractMatrix, input::AbstractMatrix)
+    r = solver.r
+    Tdim = length(tdata)
+    u = Matrix{Float64}(undef, r, Tdim)
+    u[:, 1] .= u0
+ 
+    Δt = tdata[2] - tdata[1]
+    has_input = size(B, 2) > 0 && !isempty(input)
+ 
+    rhs = Vector{Float64}(undef, r)
+ 
+    if has_input
+        Bu = Vector{Float64}(undef, r)
+        @inbounds for j in 2:Tdim
+            mul!(Bu, B, view(input, :, j-1))
+            @. rhs = u[:, j-1] + Δt * Bu
+            backward_euler_solve!(view(u, :, j), solver, rhs)
+        end
+    else
+        @inbounds for j in 2:Tdim
+            @. rhs = u[:, j-1]
+            backward_euler_solve!(view(u, :, j), solver, rhs)
+        end
+    end
+    return u
+end
+ 
+# Convenience: no-input overload
+function integrate_model_fast(solver::FastDenseSolver,
+                              tdata::AbstractVector, u0::AbstractVector)
+    return integrate_model_fast(solver, tdata, u0,
+                                zeros(solver.r, 0), zeros(0, length(tdata)))
 end
 
 end

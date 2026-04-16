@@ -46,7 +46,7 @@ using .ModifiedKortewegDeVriesBurgers: ModifiedKortewegDeVriesBurgersModel
 # 2D models
 include("2D/Heat2D.jl")
 include("2D/AllenCahn2D.jl")
-using .Heat2D: Heat2DModel, FastDirichletSolver, FastPeriodicSolver, build_fast_be_solver, integrate_model_fast
+using .Heat2D: Heat2DModel, FastDirichletSolver, FastPeriodicSolver, FastDenseSolver, build_fast_be_solver, integrate_model_fast, update_timestep!
 using .AllenCahn2D: AllenCahn2DModel
 
 end

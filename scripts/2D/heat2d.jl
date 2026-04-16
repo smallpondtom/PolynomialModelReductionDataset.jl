@@ -8,7 +8,7 @@
 using CairoMakie
 using LinearAlgebra
 using Revise
-using PolynomialModelReductionDataset: Heat2DModel, build_fast_be_solver, integrate_model_fast
+using PolynomialModelReductionDataset: Heat2DModel, FastDenseSolver, build_fast_be_solver, integrate_model_fast
 using UniqueKronecker: invec
 
 #=======================#
@@ -61,6 +61,37 @@ t2 = @elapsed U_fast = integrate_model_fast(solver, B, Ubc, heat2d.tspan, heat2d
 
 # Verify fast implementation 
 println("Backward Euler rel. error: ", norm(U - U_fast) / norm(U))
+
+
+#========================================#
+## ROM (dense unstructured fast solver)
+#========================================#
+F = svd(U)
+Vr = F.U[:, 1:30]
+Ar = Vr' * A * Vr
+Br = Vr' * B
+IC_r = Vr' * heat2d.IC
+solver = FastDenseSolver(Ar, heat2d.Δt)
+t3 = @elapsed U_rom = integrate_model_fast(solver, heat2d.tspan, IC_r, Br, Ubc)
+println("ROM Backward Euler time: ", t3, " seconds")
+
+# Compare to ROM reconstruction with full order model
+U_recon = Vr * U_rom
+println("ROM rel. error: ", norm(U - U_recon) / norm(U))
+
+## Run the old slower solver 
+t4 = @elapsed U_rom2 = heat2d.integrate_model(
+    heat2d.tspan, IC_r, Ubc; linear_matrix=Ar, control_matrix=Br,
+    system_input=true, integrator_type=:BackwardEuler
+)
+println("ROM Backward Euler (old solver) time: ", t4, " seconds")
+U_recon2 = Vr * U_rom2
+println("ROM (old solver) rel. error: ", norm(U - U_recon2) / norm(U))
+
+
+# # Change Δt cheaply
+# update_timestep!(solver, Δt_new)
+# u_rom2 = integrate_model_fast(solver, tdata_new, u0r, Br, input_new)
 
 #==================#
 ## Animate Solution
@@ -172,3 +203,4 @@ with_theme(theme_latexfonts()) do
         autolimits!(ax2) # update limits
     end
 end
+
