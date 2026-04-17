@@ -15,7 +15,8 @@ https://github.com/smallpondtom/PoMoReDa/blob/main/license.txt)
 http://dx.doi.org/10.1016/j.cma.2016.03.025)
 [![Lift & Learn Paper](https://img.shields.io/badge/DOI-10.1038%2Fs41592--019--0686--2-blue)](
 https://doi.org/10.1016/j.physd.2020.132401)
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17705180.svg)](https://doi.org/10.5281/zenodo.17705180)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.19632223.svg)](https://doi.org/10.5281/zenodo.19632223)
+
 
 # Polynomial Model Reduction Dataset
 This GitHub repo includes various polynomial structured ordinary differential equations (ODEs) models and its dataset derived from large-scale partial differential equations (PDEs).
@@ -127,18 +128,11 @@ If you use this project in your research, please consider citing the following p
   title        = {smallpondtom/PolynomialModelReductionDataset.jl:
                    v0.1.3
                   },
-  month        = Apr,
+  month        = apr,
   year         = 2026,
   publisher    = {Zenodo},
   version      = {v0.1.3},
-  doi          = {10.5281/zenodo.17705180},
-  url          = {https://doi.org/10.5281/zenodo.17705180},
-  swhid        = {swh:1:dir:6b3642185dbbc19d2f47fc142aa519b922f932a5
-                   ;origin=https://doi.org/10.5281/zenodo.13913270;vi
-                   sit=swh:1:snp:1280433058e8471a40842d1eeb51fe079420
-                   f730;anchor=swh:1:rel:d2fade1d6652b7fb9519b25316bc
-                   4ff1d62d19e1;path=smallpondtom-
-                   PolynomialModelReductionDataset.jl-3e0c4ec
-                  },
+  doi          = {10.5281/zenodo.19632223},
+  url          = {https://doi.org/10.5281/zenodo.19632223},
 }
 ```
