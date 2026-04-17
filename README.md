@@ -116,3 +116,28 @@ Contributions are welcome! If you find a bug or have a feature request, please o
 This project is licensed under the [MIT License](https://github.com/smallpondtom/PolynomialModelReductionDataset.jl/blob/main/LICENSE).
 
 
+## Citing this project
+
+If you use this project in your research, please consider citing the following paper:
+
+```bibtex
+@software{koike2026pomoreda,
+  author       = {Tomoki Koike},
+  title        = {smallpondtom/PolynomialModelReductionDataset.jl:
+                   v0.1.3
+                  },
+  month        = Apr,
+  year         = 2026,
+  publisher    = {Zenodo},
+  version      = {v0.1.3},
+  doi          = {10.5281/zenodo.17705180},
+  url          = {https://doi.org/10.5281/zenodo.17705180},
+  swhid        = {swh:1:dir:6b3642185dbbc19d2f47fc142aa519b922f932a5
+                   ;origin=https://doi.org/10.5281/zenodo.13913270;vi
+                   sit=swh:1:snp:1280433058e8471a40842d1eeb51fe079420
+                   f730;anchor=swh:1:rel:d2fade1d6652b7fb9519b25316bc
+                   4ff1d62d19e1;path=smallpondtom-
+                   PolynomialModelReductionDataset.jl-3e0c4ec
+                  },
+}
+```
