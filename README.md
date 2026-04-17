@@ -15,6 +15,7 @@ https://github.com/smallpondtom/PoMoReDa/blob/main/license.txt)
 http://dx.doi.org/10.1016/j.cma.2016.03.025)
 [![Lift & Learn Paper](https://img.shields.io/badge/DOI-10.1038%2Fs41592--019--0686--2-blue)](
 https://doi.org/10.1016/j.physd.2020.132401)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17705180.svg)](https://doi.org/10.5281/zenodo.17705180)
 
 # Polynomial Model Reduction Dataset
 This GitHub repo includes various polynomial structured ordinary differential equations (ODEs) models and its dataset derived from large-scale partial differential equations (PDEs).
