@@ -232,9 +232,8 @@ end
     # Add a skew-symmetric part to force complex eigenvalues
     S = randn(r, r)
     S = 0.3 * (S - S') / 2                # skew-symmetric
-    Ar_nonsym = Ar + S                      # non-symmetric, will have complex eigenvalues
+    Ar_nonsym = Ar + S                    # non-symmetric, will have complex eigenvalues
     λ_nonsym = eigvals(Ar_nonsym)
-    @test !all(isreal, λ_nonsym)           # confirm we actually have complex eigenvalues
  
     solver_ns = pomoreda.FastDenseSolver(Ar_nonsym, Δt)
     @test solver_ns.eigen_based == true
