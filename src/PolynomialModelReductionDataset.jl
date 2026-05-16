@@ -18,6 +18,21 @@ abstract type AbstractModel end
 
 # Utility functions
 include("utilities/adjust_input.jl")
+include("utilities/FastSolvers.jl")
+using .FastSolvers: AbstractFastSolver,
+                    FastSymTridiagSolver, FastCirculant1DSolver,
+                    FastKronSumSolver, FastFFT2DSolver,
+                    FastDenseSolver, FactorizedSolver,
+                    linsolve!, mulIpA!, update_timestep!,
+                    backward_euler_solve!,
+                    build_fast_solver, integrate_model_fast
+export AbstractFastSolver,
+       FastSymTridiagSolver, FastCirculant1DSolver,
+       FastKronSumSolver, FastFFT2DSolver,
+       FastDenseSolver, FactorizedSolver,
+       linsolve!, mulIpA!, update_timestep!,
+       backward_euler_solve!,
+       build_fast_solver, integrate_model_fast
 
 # 1D models
 include("1D/AllenCahn1D.jl")
@@ -46,7 +61,8 @@ using .ModifiedKortewegDeVriesBurgers: ModifiedKortewegDeVriesBurgersModel
 # 2D models
 include("2D/Heat2D.jl")
 include("2D/AllenCahn2D.jl")
-using .Heat2D: Heat2DModel, FastDirichletSolver, FastPeriodicSolver, FastDenseSolver, build_fast_be_solver, integrate_model_fast, update_timestep!
+using .Heat2D: Heat2DModel, FastDirichletSolver, FastPeriodicSolver,
+               build_fast_be_solver, integrate_model_fast
 using .AllenCahn2D: AllenCahn2DModel
 
 end

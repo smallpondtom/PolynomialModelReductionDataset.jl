@@ -10,8 +10,12 @@ using SparseArrays
 using UniqueKronecker
 
 import ..PolynomialModelReductionDataset: AbstractModel
+using ..FastSolvers
+import ..FastSolvers: build_fast_solver, integrate_model_fast,
+                      linsolve!, mulIpA!,
+                      FastCirculant1DSolver, FactorizedSolver, AbstractFastSolver
 
-export KuramotoSivashinskyModel
+export KuramotoSivashinskyModel, build_fast_solver, integrate_model_fast
 
 
 """
@@ -706,6 +710,69 @@ function jacobian(x::AbstractVector{T}; kwargs...) where {T}
     A = kwargs[:linear_matrix]
     F = kwargs[:quadratic_matrix]
     return A + F * elimat(n, 2) * (1.0I(n) ⊛ x)
+end
+
+
+# ============================================================================
+# Fast CNAB integrator for the *finite-difference* KSE model. A is a
+# pentadiagonal circulant operator (`model_type == :FD`, periodic BCs only)
+# → FFT diagonalization. The spectral / pseudo-spectral KSE integrators
+# already operate in the diagonal Fourier basis and need no acceleration.
+# ============================================================================
+
+"""
+$(SIGNATURES)
+
+Build a fast CNAB-flavoured solver for the finite-difference KSE
+(`model.model_type === :FD`).
+"""
+function build_fast_solver(model::KuramotoSivashinskyModel, μ::Real;
+                            scheme::Symbol=:CN, Δt::Real=model.Δt)
+    @assert scheme === :CN "KSE fast integrator uses Crank-Nicolson (scheme=:CN)"
+    @assert model.BC === :periodic "Fast KSE solver requires periodic BCs"
+    @assert model.model_type === :FD "Fast solver only supports the finite-difference KSE (model_type=:FD)"
+    α = Float64(Δt) / 2
+    A, _ = finite_diff_model(model, μ)
+    return FastCirculant1DSolver(A, α)
+end
+
+
+"""
+$(SIGNATURES)
+
+Fast CNAB integrator for finite-difference KSE.
+
+## Keyword Arguments
+- `quadratic_matrix`: F from `finite_diff_model`
+- `u2_jm1=nothing`: AB-2 seed
+"""
+function integrate_model_fast(model::KuramotoSivashinskyModel,
+                              solver::AbstractFastSolver,
+                              tdata::AbstractVector, IC::AbstractVector;
+                              quadratic_matrix, u2_jm1=nothing)
+    Xdim = length(IC)
+    Tdim = length(tdata)
+    u = zeros(Xdim, Tdim)
+    u[:, 1] = IC
+    Δt = tdata[2] - tdata[1]
+    F = quadratic_matrix
+
+    rhs = Vector{Float64}(undef, Xdim)
+    tmp = Vector{Float64}(undef, Xdim)
+
+    @inbounds for j in 2:Tdim
+        u2 = u[:, j-1] ⊘ u[:, j-1]
+        mulIpA!(rhs, solver, view(u, :, j-1))
+        if j == 2 && u2_jm1 === nothing
+            mul!(tmp, F, u2); @. rhs = rhs + Δt * tmp
+        else
+            mul!(tmp, F, u2);     @. rhs = rhs + (3*Δt/2) * tmp
+            mul!(tmp, F, u2_jm1); @. rhs = rhs - (Δt/2)   * tmp
+        end
+        linsolve!(view(u, :, j), solver, rhs)
+        u2_jm1 = u2
+    end
+    return u
 end
 
 end

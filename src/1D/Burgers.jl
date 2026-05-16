@@ -9,8 +9,12 @@ using SparseArrays
 using UniqueKronecker
 
 import ..PolynomialModelReductionDataset: AbstractModel, adjust_input
+using ..FastSolvers
+import ..FastSolvers: build_fast_solver, integrate_model_fast,
+                      linsolve!,
+                      FastCirculant1DSolver, FactorizedSolver, AbstractFastSolver
 
-export BurgersModel
+export BurgersModel, build_fast_solver, integrate_model_fast
 
 
 """
@@ -411,6 +415,83 @@ function integrate_model(tdata::AbstractArray{T}, u0::AbstractArray{T},
     else
         return integrate_model_without_control(tdata, u0; linear_matrix=A, quadratic_matrix=F)
     end
+end
+
+
+# ============================================================================
+# Fast Semi-Implicit Euler integrator (Burgers only supports SIE).
+# ----------------------------------------------------------------------------
+#   * periodic BCs → A is circulant tridiagonal → FFT diagonalization
+#   * Dirichlet BCs → A has `-1/Δt` baked into the boundary rows; we fall back
+#     to a sparse LU of `(I - Δt A)` (computed once).  Because Δt is encoded
+#     in A itself, the solver must be rebuilt if Δt changes.
+# Backward Euler / SIE bakes `α = Δt`.
+# ============================================================================
+
+"""
+$(SIGNATURES)
+
+Build a fast Backward-Euler solver for Burgers (used by Semi-Implicit Euler).
+Pass through keyword arguments accepted by `finite_diff_model` (e.g.
+`same_on_both_ends`, `opposite_sign_on_ends`).
+"""
+function build_fast_solver(model::BurgersModel, μ::Real;
+                            scheme::Symbol=:BE, Δt::Real=model.Δt, kwargs...)
+    @assert scheme === :BE "Burgers uses Semi-Implicit Euler (scheme=:BE)"
+    α = Float64(Δt)
+    out = finite_diff_model(model, μ; kwargs...)
+    A = out isa Tuple ? out[1] : out
+    if model.BC === :periodic
+        return FastCirculant1DSolver(A, α)
+    else
+        return FactorizedSolver(sparse(A), α)
+    end
+end
+
+
+"""
+$(SIGNATURES)
+
+Fast Semi-Implicit Euler integrator for Burgers.
+
+## Keyword Arguments
+- `quadratic_matrix`: F from `finite_diff_model`
+- `control_matrix=nothing`: B from `finite_diff_model`
+"""
+function integrate_model_fast(model::BurgersModel, solver::AbstractFastSolver,
+                              tdata::AbstractVector, u0::AbstractVector,
+                              input::AbstractArray=Float64[];
+                              quadratic_matrix, control_matrix=nothing)
+    Xdim = length(u0)
+    Tdim = length(tdata)
+    u = zeros(Xdim, Tdim)
+    u[:, 1] = u0
+    Δt = tdata[2] - tdata[1]
+    F = quadratic_matrix
+
+    has_input = control_matrix !== nothing && !isempty(input)
+    if has_input
+        input = adjust_input(input, size(control_matrix, 2), Tdim)
+    end
+
+    rhs = Vector{Float64}(undef, Xdim)
+    tmp = Vector{Float64}(undef, Xdim)
+
+    @inbounds for j in 2:Tdim
+        u2 = ⊘(u[:, j-1], 2)
+        @views @. rhs = u[:, j-1]
+        mul!(tmp, F, u2)
+        @. rhs = rhs + Δt * tmp
+        if has_input
+            @views begin
+                # Burgers slow path uses input[:, j] (not input[:, j-1])
+                mul!(tmp, control_matrix, input[:, j])
+                @. rhs = rhs + Δt * tmp
+            end
+        end
+        linsolve!(view(u, :, j), solver, rhs)
+    end
+    return u
 end
 
 end

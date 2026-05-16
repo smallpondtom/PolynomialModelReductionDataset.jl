@@ -10,8 +10,13 @@ using SparseArrays
 using UniqueKronecker
 
 import ..PolynomialModelReductionDataset: AbstractModel, adjust_input
+using ..FastSolvers
+import ..FastSolvers: build_fast_solver, integrate_model_fast,
+                      linsolve!, mulIpA!,
+                      FastKronSumSolver, FastFFT2DSolver,
+                      AbstractFastSolver
 
-export AllenCahn2DModel
+export AllenCahn2DModel, build_fast_solver, integrate_model_fast
 
 
 """
@@ -552,32 +557,156 @@ function integrate_model(tdata::AbstractArray{T}, u0::AbstractArray{T}, input::A
     if system_input
         if integrator_type == :SICN
             integrate_model_with_control_SICN(
-                tdata, u0, input; 
-                # tdata, u0, input, cubic_indices; 
-                linear_matrix=linear_matrix, cubic_matrix=cubic_matrix, 
+                tdata, u0, input;
+                # tdata, u0, input, cubic_indices;
+                linear_matrix=linear_matrix, cubic_matrix=cubic_matrix,
                 control_matrix=control_matrix)
         else
             integrate_model_with_control_CNAB(
-                tdata, u0, input; 
-                # tdata, u0, input, cubic_indices; 
-                linear_matrix=linear_matrix, cubic_matrix=cubic_matrix, 
-                control_matrix=control_matrix, 
+                tdata, u0, input;
+                # tdata, u0, input, cubic_indices;
+                linear_matrix=linear_matrix, cubic_matrix=cubic_matrix,
+                control_matrix=control_matrix,
                 const_stepsize=const_stepsize, u3_jm1=u3_jm1)
         end
     else
         if integrator_type == :SICN
             integrate_model_without_control_SICN(
-                tdata, u0; 
-                # tdata, u0, cubic_indices; 
+                tdata, u0;
+                # tdata, u0, cubic_indices;
                 linear_matrix=linear_matrix, cubic_matrix=cubic_matrix)
         else
             integrate_model_without_control_CNAB(
-                tdata, u0; 
-                # tdata, u0, cubic_indices; 
+                tdata, u0;
+                # tdata, u0, cubic_indices;
                 linear_matrix=linear_matrix, cubic_matrix=cubic_matrix,
                 const_stepsize=const_stepsize, u3_jm1=u3_jm1)
         end
     end
+end
+
+
+# ============================================================================
+# Fast SICN / CNAB integrator for 2D Allen-Cahn
+# ----------------------------------------------------------------------------
+# The 2D linear operator has the same Kronecker-sum structure as the
+# 2D heat operator:
+#       A = (Ay ⊗ I) + (I ⊗ Ax)
+# We rebuild the 1D factors `Ax, Ay` from the same diagonal recipe used by
+# `finite_diff_{periodic,dirichlet}_model`. Each is either
+#   * symmetric tridiagonal  (Dirichlet)  → FastKronSumSolver
+#   * circulant tridiagonal  (periodic)   → FastFFT2DSolver
+# Crank–Nicolson bakes `α = Δt/2`; SICN / CNAB use the same solver.
+# ============================================================================
+
+function _ac2d_1d_factor_dirichlet(N::Integer, Δ::Real, μ::Real, ϵ::Real)
+    return SymTridiagonal(fill(ϵ - 2μ/Δ^2, N), fill(μ/Δ^2, N-1))
+end
+
+function _ac2d_1d_factor_periodic_eigvals(N::Integer, Δ::Real, μ::Real, ϵ::Real)
+    # Eigenvalues of the 1D circulant operator with diag (ϵ - 2μ/Δ²) and
+    # off-diagonals μ/Δ². For each Fourier mode k = 0,...,N-1:
+    #   λ_k = (ϵ - 2μ/Δ²) + (μ/Δ²) * (ω^k + ω^{-k})   where ω = exp(-2π i / N)
+    #        = ϵ + (μ/Δ²)(2 cos(2π k / N) - 2)
+    return [ϵ + μ/Δ^2 * (2cos(2π*(k-1)/N) - 2) for k in 1:N]
+end
+
+
+"""
+$(SIGNATURES)
+
+Build a fast Crank-Nicolson-flavoured solver for AllenCahn2D
+(bakes `α = Δt/2`).
+"""
+function build_fast_solver(model::AllenCahn2DModel, params::Dict;
+                            scheme::Symbol=:CN, Δt::Real=model.Δt)
+    @assert scheme === :CN "AllenCahn2D fast integrators use Crank-Nicolson (scheme=:CN)"
+    α = Float64(Δt) / 2
+    μ = params[:μ]
+    ϵ = params[:ϵ]
+    Nx, Ny = model.spatial_dim
+    if all(model.BC .== :periodic)
+        λx = _ac2d_1d_factor_periodic_eigvals(Nx, model.Δx, μ, ϵ)
+        λy = _ac2d_1d_factor_periodic_eigvals(Ny, model.Δy, μ, ϵ)
+        return FastFFT2DSolver(λx, λy, α)
+    elseif all(model.BC .== :dirichlet)
+        Ax = _ac2d_1d_factor_dirichlet(Nx, model.Δx, μ, ϵ)
+        Ay = _ac2d_1d_factor_dirichlet(Ny, model.Δy, μ, ϵ)
+        return FastKronSumSolver(Ax, Ay, α)
+    else
+        error("Fast solver not implemented for BC = $(model.BC). " *
+              "Currently supports (:dirichlet, :dirichlet) and (:periodic, :periodic).")
+    end
+end
+
+
+"""
+$(SIGNATURES)
+
+Fast SICN or CNAB integrator for the 2D Allen-Cahn model.
+
+## Arguments
+- `model::AllenCahn2DModel`
+- `solver::AbstractFastSolver`: from [`build_fast_solver`](@ref) with `scheme=:CN`
+- `tdata::AbstractVector`: time grid
+- `u0::AbstractVector`: initial condition (vec'd from 2D)
+- `input::AbstractArray=Float64[]`: boundary input matrix (if applicable)
+
+## Keyword Arguments
+- `cubic_matrix`: E from `finite_diff_model`
+- `control_matrix=nothing`: B from `finite_diff_model`
+- `integrator_type::Symbol=:CNAB`: `:SICN` or `:CNAB`
+- `u3_jm1=nothing`: seed for AB-2 (CNAB only)
+"""
+function integrate_model_fast(model::AllenCahn2DModel, solver::AbstractFastSolver,
+                              tdata::AbstractVector, u0::AbstractVector,
+                              input::AbstractArray=Float64[];
+                              cubic_matrix, control_matrix=nothing,
+                              integrator_type::Symbol=:CNAB,
+                              u3_jm1=nothing)
+    @assert integrator_type ∈ (:SICN, :CNAB) "integrator_type must be :SICN or :CNAB"
+    Xdim = length(u0)
+    Tdim = length(tdata)
+    u = zeros(Xdim, Tdim)
+    u[:, 1] = u0
+    Δt = tdata[2] - tdata[1]
+    E = cubic_matrix
+
+    has_input = control_matrix !== nothing && !isempty(input)
+    if has_input
+        input = adjust_input(input, size(control_matrix, 2), Tdim)
+    end
+
+    rhs = Vector{Float64}(undef, Xdim)
+    tmp = Vector{Float64}(undef, Xdim)
+
+    @inbounds for j in 2:Tdim
+        u3 = ⊘(u[:, j-1], 3)
+        mulIpA!(rhs, solver, view(u, :, j-1))     # rhs = (I + Δt/2 A) u_old
+
+        if integrator_type === :SICN || (j == 2 && u3_jm1 === nothing)
+            mul!(tmp, E, u3)
+            @. rhs = rhs + Δt * tmp
+        else
+            mul!(tmp, E, u3)
+            @. rhs = rhs + (3*Δt/2) * tmp
+            mul!(tmp, E, u3_jm1)
+            @. rhs = rhs - (Δt/2) * tmp
+        end
+
+        if has_input
+            @views begin
+                mul!(tmp, control_matrix, input[:, j-1])
+                @. rhs = rhs + 0.5 * Δt * tmp
+                mul!(tmp, control_matrix, input[:, j])
+                @. rhs = rhs + 0.5 * Δt * tmp
+            end
+        end
+
+        linsolve!(view(u, :, j), solver, rhs)
+        u3_jm1 = u3
+    end
+    return u
 end
 
 end

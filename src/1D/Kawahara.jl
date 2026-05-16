@@ -10,8 +10,12 @@ using SparseArrays
 using UniqueKronecker
 
 import ..PolynomialModelReductionDataset: AbstractModel
+using ..FastSolvers
+import ..FastSolvers: build_fast_solver, integrate_model_fast,
+                      linsolve!, mulIpA!,
+                      FastCirculant1DSolver, FactorizedSolver, AbstractFastSolver
 
-export KawaharaModel
+export KawaharaModel, build_fast_solver, integrate_model_fast
 
 
 """
@@ -474,6 +478,67 @@ function integrate_finite_diff_model(tdata, IC, args...; kwargs...)
             end
             u2_jm1 = u2
         end
+    end
+    return u
+end
+
+
+# ============================================================================
+# Fast CNAB integrator for Kawahara (periodic-only). A is pentadiagonal or
+# heptadiagonal circulant → FFT diagonalization. Bakes `α = Δt/2`.
+# ============================================================================
+
+"""
+$(SIGNATURES)
+
+Build a fast CNAB-flavoured solver for Kawahara. The positional arguments
+`μ, δ, ν` are passed through to [`finite_diff_model`](@ref) (matching its
+signature for the given dispersion order).
+"""
+function build_fast_solver(model::KawaharaModel, μ::Real, δ::Real=0.0, ν::Real=0.0;
+                            scheme::Symbol=:CN, Δt::Real=model.Δt)
+    @assert scheme === :CN "Kawahara fast integrator uses Crank-Nicolson (scheme=:CN)"
+    @assert model.BC === :periodic "Fast Kawahara solver requires periodic BCs"
+    α = Float64(Δt) / 2
+    out = finite_diff_model(model, μ, δ, ν)
+    A = out isa Tuple ? out[1] : out
+    return FastCirculant1DSolver(A, α)
+end
+
+
+"""
+$(SIGNATURES)
+
+Fast CNAB integrator for Kawahara.
+
+## Keyword Arguments
+- `quadratic_matrix`: F from `finite_diff_model`
+- `u2_jm1=nothing`: AB-2 seed
+"""
+function integrate_model_fast(model::KawaharaModel, solver::AbstractFastSolver,
+                              tdata::AbstractVector, IC::AbstractVector;
+                              quadratic_matrix, u2_jm1=nothing)
+    Xdim = length(IC)
+    Tdim = length(tdata)
+    u = zeros(Xdim, Tdim)
+    u[:, 1] = IC
+    Δt = tdata[2] - tdata[1]
+    F = quadratic_matrix
+
+    rhs = Vector{Float64}(undef, Xdim)
+    tmp = Vector{Float64}(undef, Xdim)
+
+    @inbounds for j in 2:Tdim
+        u2 = u[:, j-1] ⊘ u[:, j-1]
+        mulIpA!(rhs, solver, view(u, :, j-1))
+        if j == 2 && u2_jm1 === nothing
+            mul!(tmp, F, u2); @. rhs = rhs + Δt * tmp
+        else
+            mul!(tmp, F, u2);     @. rhs = rhs + (3*Δt/2) * tmp
+            mul!(tmp, F, u2_jm1); @. rhs = rhs - (Δt/2)   * tmp
+        end
+        linsolve!(view(u, :, j), solver, rhs)
+        u2_jm1 = u2
     end
     return u
 end

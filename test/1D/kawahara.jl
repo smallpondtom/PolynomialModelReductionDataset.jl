@@ -27,11 +27,21 @@
     #============#
     ## Integrate
     #============#
-    U = kawahara.integrate_model(
-        kawahara.tspan, u0, nothing; 
+    Uref = kawahara.integrate_model(
+        kawahara.tspan, u0, nothing;
         linear_matrix=A, quadratic_matrix=F, const_stepsize=true
     )
-    @test size(U) == (kawahara.spatial_dim, kawahara.time_dim)
+    @test size(Uref) == (kawahara.spatial_dim, kawahara.time_dim)
+
+    # Fast CNAB
+    solver = pomoreda.build_fast_solver(kawahara,
+                                         kawahara.params[:mu],
+                                         kawahara.params[:delta];
+                                         scheme=:CN)
+    @test solver isa pomoreda.FastCirculant1DSolver
+    Ufast = pomoreda.integrate_model_fast(kawahara, solver, kawahara.tspan, u0;
+                                           quadratic_matrix=F)
+    @test Ufast ≈ Uref
 
     #===============================================#
     ## Model (Periodic BC) - 3rd order dispersion

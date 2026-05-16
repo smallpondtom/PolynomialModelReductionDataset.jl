@@ -9,8 +9,12 @@ using SparseArrays
 using UniqueKronecker
 
 import ..PolynomialModelReductionDataset: AbstractModel, adjust_input
+using ..FastSolvers
+import ..FastSolvers: build_fast_solver, integrate_model_fast,
+                      linsolve!, mulIpA!,
+                      FastCirculant1DSolver, FactorizedSolver, AbstractFastSolver
 
-export ModifiedKortewegDeVriesModel
+export ModifiedKortewegDeVriesModel, build_fast_solver, integrate_model_fast
 
 """
 $(TYPEDEF)
@@ -444,7 +448,7 @@ function integrate_model(tdata::AbstractArray{T}, u0::AbstractArray{T}, input::A
         if integrator_type == :SIE
             integrate_model_with_control_SIE(tdata, u0, input; linear_matrix=linear_matrix, cubic_matrix=cubic_matrix, control_matrix=control_matrix)
         else
-            integrate_model_with_control_CNAB(tdata, u0, input; linear_matrix=linear_matrix, cubic_matrix=cubic_matrix, 
+            integrate_model_with_control_CNAB(tdata, u0, input; linear_matrix=linear_matrix, cubic_matrix=cubic_matrix,
                                               control_matrix=control_matrix, const_stepsize=const_stepsize, u3_jm1=u3_jm1)
         end
     else
@@ -455,6 +459,102 @@ function integrate_model(tdata::AbstractArray{T}, u0::AbstractArray{T}, input::A
                                                  const_stepsize=const_stepsize, u3_jm1=u3_jm1)
         end
     end
+end
+
+
+# ============================================================================
+# Fast SIE / CNAB integrator for mKdV. periodic → pentadiagonal circulant
+# (FFT); Dirichlet → LU factorization (`-1/Δt` boundary rows).
+# ============================================================================
+
+"""
+$(SIGNATURES)
+"""
+function build_fast_solver(model::ModifiedKortewegDeVriesModel, params::Dict;
+                            scheme::Symbol=:CN, Δt::Real=model.Δt)
+    α = scheme === :BE ? Float64(Δt) :
+        scheme === :CN ? Float64(Δt)/2 :
+        error("scheme must be :BE or :CN, got $scheme")
+    out = finite_diff_model(model, params)
+    A = out isa Tuple ? out[1] : out
+    if model.BC === :periodic
+        return FastCirculant1DSolver(A, α)
+    else
+        return FactorizedSolver(sparse(A), α)
+    end
+end
+
+
+"""
+$(SIGNATURES)
+
+Fast SIE or CNAB integrator for mKdV.
+
+## Keyword Arguments
+- `cubic_matrix`: E from `finite_diff_model`
+- `control_matrix=nothing`: B from `finite_diff_model`
+- `integrator_type::Symbol=:CNAB`: `:SIE` or `:CNAB`
+- `u3_jm1=nothing`: AB-2 seed (CNAB only)
+"""
+function integrate_model_fast(model::ModifiedKortewegDeVriesModel, solver::AbstractFastSolver,
+                              tdata::AbstractVector, u0::AbstractVector,
+                              input::AbstractArray=Float64[];
+                              cubic_matrix, control_matrix=nothing,
+                              integrator_type::Symbol=:CNAB,
+                              u3_jm1=nothing)
+    @assert integrator_type ∈ (:SIE, :CNAB) "integrator_type must be :SIE or :CNAB"
+    Xdim = length(u0)
+    Tdim = length(tdata)
+    u = zeros(Xdim, Tdim)
+    u[:, 1] = u0
+    Δt = tdata[2] - tdata[1]
+    E = cubic_matrix
+
+    has_input = control_matrix !== nothing && !isempty(input)
+    if has_input
+        input = adjust_input(input, size(control_matrix, 2), Tdim)
+    end
+
+    rhs = Vector{Float64}(undef, Xdim)
+    tmp = Vector{Float64}(undef, Xdim)
+
+    if integrator_type === :SIE
+        @inbounds for j in 2:Tdim
+            u3 = ⊘(u[:, j-1], 3)
+            @views @. rhs = u[:, j-1]
+            mul!(tmp, E, u3); @. rhs = rhs + Δt * tmp
+            if has_input
+                @views mul!(tmp, control_matrix, input[:, j-1])
+                @. rhs = rhs + Δt * tmp
+            end
+            linsolve!(view(u, :, j), solver, rhs)
+        end
+    else
+        @inbounds for j in 2:Tdim
+            u3 = ⊘(u[:, j-1], 3)
+            mulIpA!(rhs, solver, view(u, :, j-1))
+
+            if j == 2 && u3_jm1 === nothing
+                mul!(tmp, E, u3); @. rhs = rhs + Δt * tmp
+            else
+                mul!(tmp, E, u3);     @. rhs = rhs + (3*Δt/2) * tmp
+                mul!(tmp, E, u3_jm1); @. rhs = rhs - (Δt/2)   * tmp
+            end
+
+            if has_input
+                @views begin
+                    mul!(tmp, control_matrix, input[:, j-1])
+                    @. rhs = rhs + 0.5 * Δt * tmp
+                    mul!(tmp, control_matrix, input[:, j])
+                    @. rhs = rhs + 0.5 * Δt * tmp
+                end
+            end
+
+            linsolve!(view(u, :, j), solver, rhs)
+            u3_jm1 = u3
+        end
+    end
+    return u
 end
 
 end

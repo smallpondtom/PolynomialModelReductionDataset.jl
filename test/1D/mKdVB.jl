@@ -55,16 +55,53 @@
     #============#
     ## Integrate
     #============#
-    U = mKdV.integrate_model(
-        mKdV.tspan, mKdV.IC, Ubc; 
+    Ucnab = mKdV.integrate_model(
+        mKdV.tspan, mKdV.IC, Ubc;
         linear_matrix=A, cubic_matrix=E, control_matrix=B,
-        system_input=true, integrator_type=:CNAB,
+        system_input=true, integrator_type=:CNAB, const_stepsize=true,
     )
-    @test size(U) == (mKdV.spatial_dim, mKdV.time_dim)
-    U = mKdV.integrate_model(
-        mKdV.tspan, mKdV.IC, Ubc; 
+    @test size(Ucnab) == (mKdV.spatial_dim, mKdV.time_dim)
+    Usie = mKdV.integrate_model(
+        mKdV.tspan, mKdV.IC, Ubc;
         linear_matrix=A, cubic_matrix=E, control_matrix=B,
         system_input=true, integrator_type=:SIE,
     )
-    @test size(U) == (mKdV.spatial_dim, mKdV.time_dim)
+    @test size(Usie) == (mKdV.spatial_dim, mKdV.time_dim)
+
+    # Fast SIE / CNAB (Dirichlet → FactorizedSolver)
+    solver_cn = pomoreda.build_fast_solver(mKdV, mKdV.params; scheme=:CN)
+    solver_be = pomoreda.build_fast_solver(mKdV, mKdV.params; scheme=:BE)
+    @test solver_cn isa pomoreda.FactorizedSolver
+    Ufast_cnab = pomoreda.integrate_model_fast(mKdV, solver_cn, mKdV.tspan, mKdV.IC, Ubc;
+                                                cubic_matrix=E, control_matrix=B,
+                                                integrator_type=:CNAB)
+    @test agrees_until_nan(Ufast_cnab, Ucnab)
+    Ufast_sie = pomoreda.integrate_model_fast(mKdV, solver_be, mKdV.tspan, mKdV.IC, Ubc;
+                                               cubic_matrix=E, control_matrix=B,
+                                               integrator_type=:SIE)
+    @test agrees_until_nan(Ufast_sie, Usie)
+end
+
+
+@testset "mKdVB equation (periodic, fast SIE/CNAB)" begin
+    Ω = (0.0, 3.0); Nx = 2^7; dt = 1e-3
+    mkb = pomoreda.ModifiedKortewegDeVriesBurgersModel(
+        spatial_domain=Ω, time_domain=(0.0, 3.0), Δx=(Ω[2] + 1/Nx)/Nx, Δt=dt,
+        params=Dict(:a => 1, :b => 3, :c => 0.1), BC=:periodic,
+    )
+    mkb.IC = 2 * cos.(2π * mkb.xspan / (Ω[2] - Ω[1]))
+    A, E = mkb.finite_diff_model(mkb, mkb.params)
+    Ucnab = mkb.integrate_model(mkb.tspan, mkb.IC; linear_matrix=A, cubic_matrix=E,
+                                 system_input=false, integrator_type=:CNAB, const_stepsize=true)
+    Usie = mkb.integrate_model(mkb.tspan, mkb.IC; linear_matrix=A, cubic_matrix=E,
+                                system_input=false, integrator_type=:SIE)
+    solver_cn = pomoreda.build_fast_solver(mkb, mkb.params; scheme=:CN)
+    solver_be = pomoreda.build_fast_solver(mkb, mkb.params; scheme=:BE)
+    @test solver_cn isa pomoreda.FastCirculant1DSolver
+    Ufast_cnab = pomoreda.integrate_model_fast(mkb, solver_cn, mkb.tspan, mkb.IC;
+                                                cubic_matrix=E, integrator_type=:CNAB)
+    Ufast_sie = pomoreda.integrate_model_fast(mkb, solver_be, mkb.tspan, mkb.IC;
+                                               cubic_matrix=E, integrator_type=:SIE)
+    @test agrees_until_nan(Ufast_cnab, Ucnab)
+    @test agrees_until_nan(Ufast_sie, Usie)
 end

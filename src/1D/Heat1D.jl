@@ -8,8 +8,13 @@ using LinearAlgebra
 using SparseArrays
 
 import ..PolynomialModelReductionDataset: AbstractModel, adjust_input
+using ..FastSolvers
+import ..FastSolvers: build_fast_solver, integrate_model_fast,
+                      linsolve!, mulIpA!,
+                      FastSymTridiagSolver, FastCirculant1DSolver,
+                      FactorizedSolver, AbstractFastSolver
 
-export Heat1DModel
+export Heat1DModel, build_fast_solver, integrate_model_fast
 
 
 """
@@ -362,6 +367,126 @@ function integrate_model(tdata::AbstractVector{T}, u0::AbstractVector{T},
         error("Integrator type not implemented. Choose from :ForwardEuler, :BackwardEuler, :CrankNicolson")
     end
 
+    return u
+end
+
+
+# ============================================================================
+# Fast implicit solvers (BE / CN) — see FastSolvers submodule
+# ----------------------------------------------------------------------------
+# For the 1D heat operator,
+#   * periodic BCs make `A` circulant → FFT diagonalization
+#   * Dirichlet / Neumann / Mixed / Robin BCs make `A` symmetric tridiagonal
+#     → eigendecomposition of `SymTridiagonal`
+# Backward Euler bakes `α = Δt` into the solver; Crank–Nicolson bakes `α = Δt/2`.
+# ============================================================================
+
+"""
+$(SIGNATURES)
+
+Build a fast implicit linear solver for the 1D heat equation. `scheme=:BE`
+bakes in `α = Δt` (backward Euler); `scheme=:CN` bakes in `α = Δt/2`
+(Crank–Nicolson). Boundary keyword arguments (e.g. `same_on_both_ends`,
+`α`/`β` for Robin) are forwarded to `finite_diff_model`.
+"""
+function build_fast_solver(model::Heat1DModel, μ::Real;
+                            scheme::Symbol=:BE, Δt::Real=model.Δt, kwargs...)
+    α = scheme === :BE ? Float64(Δt) :
+        scheme === :CN ? Float64(Δt)/2 :
+        error("scheme must be :BE or :CN, got $scheme")
+
+    if model.BC === :periodic
+        A = finite_diff_model(model, μ; kwargs...)
+        return FastCirculant1DSolver(A, α)
+    elseif model.BC ∈ (:dirichlet, :neumann, :mixed, :robin)
+        out = finite_diff_model(model, μ; kwargs...)
+        A = out isa Tuple ? out[1] : out
+        # Every supported BC here gives a symmetric-tridiagonal A
+        return FastSymTridiagSolver(A, α)
+    else
+        out = finite_diff_model(model, μ; kwargs...)
+        A = out isa Tuple ? out[1] : out
+        return FactorizedSolver(sparse(A), α)
+    end
+end
+
+
+"""
+$(SIGNATURES)
+
+Backward Euler (or Crank–Nicolson) integrator for the 1D heat equation
+using a pre-built fast solver.
+
+## Arguments
+- `model::Heat1DModel`
+- `solver::AbstractFastSolver`: from [`build_fast_solver`](@ref) (the baked-in
+  α must match the chosen scheme)
+- `tdata::AbstractVector`: time grid (uniform spacing assumed)
+- `u0::AbstractVector`: initial condition
+- `input::AbstractArray=Float64[]`: boundary input matrix (if any)
+
+## Keyword Arguments
+- `control_matrix::AbstractMatrix=nothing`: B matrix from `finite_diff_model`
+- `scheme::Symbol=:BE`: integration scheme (must match how `solver` was built)
+"""
+function integrate_model_fast(model::Heat1DModel, solver::AbstractFastSolver,
+                              tdata::AbstractVector, u0::AbstractVector,
+                              input::AbstractArray=Float64[];
+                              control_matrix=nothing,
+                              scheme::Symbol=:BE)
+    Xdim = length(u0)
+    Tdim = length(tdata)
+    u = zeros(Xdim, Tdim)
+    u[:, 1] = u0
+    Δt = tdata[2] - tdata[1]
+
+    has_input = control_matrix !== nothing && !isempty(input)
+    if has_input
+        B = control_matrix
+        input_dim = size(B, 2)
+        input = adjust_input(input, input_dim, Tdim)
+    end
+
+    rhs = Vector{Float64}(undef, Xdim)
+    tmp = Vector{Float64}(undef, Xdim)
+
+    if scheme === :BE
+        if has_input
+            @inbounds for j in 2:Tdim
+                @views begin
+                    mul!(tmp, control_matrix, input[:, j-1])
+                    @. rhs = u[:, j-1] + Δt * tmp
+                end
+                linsolve!(view(u, :, j), solver, rhs)
+            end
+        else
+            @inbounds for j in 2:Tdim
+                @views @. rhs = u[:, j-1]
+                linsolve!(view(u, :, j), solver, rhs)
+            end
+        end
+    elseif scheme === :CN
+        # CN: (I - Δt/2 A) u_new = (I + Δt/2 A) u_old + 0.5 Δt B (input_jm1 + input_j)
+        if has_input
+            @inbounds for j in 2:Tdim
+                mulIpA!(rhs, solver, view(u, :, j-1))
+                @views begin
+                    mul!(tmp, control_matrix, input[:, j-1])
+                    @. rhs = rhs + 0.5 * Δt * tmp
+                    mul!(tmp, control_matrix, input[:, j])
+                    @. rhs = rhs + 0.5 * Δt * tmp
+                end
+                linsolve!(view(u, :, j), solver, rhs)
+            end
+        else
+            @inbounds for j in 2:Tdim
+                mulIpA!(rhs, solver, view(u, :, j-1))
+                linsolve!(view(u, :, j), solver, rhs)
+            end
+        end
+    else
+        error("scheme must be :BE or :CN, got $scheme")
+    end
     return u
 end
 

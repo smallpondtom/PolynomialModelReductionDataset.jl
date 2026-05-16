@@ -1,7 +1,7 @@
 """
     Gardner PDE model
 """
-module Gardner 
+module Gardner
 
 using DocStringExtensions
 using LinearAlgebra
@@ -9,8 +9,12 @@ using SparseArrays
 using UniqueKronecker
 
 import ..PolynomialModelReductionDataset: AbstractModel, adjust_input
+using ..FastSolvers
+import ..FastSolvers: build_fast_solver, integrate_model_fast,
+                      linsolve!, mulIpA!,
+                      FastCirculant1DSolver, FactorizedSolver, AbstractFastSolver
 
-export GardnerModel
+export GardnerModel, build_fast_solver, integrate_model_fast
 
 """
 $(TYPEDEF)
@@ -491,10 +495,10 @@ function integrate_model(tdata::AbstractArray{T}, u0::AbstractArray{T}, input::A
 
     if system_input
         if integrator_type == :SIE
-            integrate_model_with_control_SIE(tdata, u0, input; linear_matrix=linear_matrix, quadratic_matrix=quadratic_matrix, 
+            integrate_model_with_control_SIE(tdata, u0, input; linear_matrix=linear_matrix, quadratic_matrix=quadratic_matrix,
                                              cubic_matrix=cubic_matrix, control_matrix=control_matrix)
         else
-            integrate_model_with_control_CNAB(tdata, u0, input; linear_matrix=linear_matrix, quadratic_matrix=quadratic_matrix, cubic_matrix=cubic_matrix, 
+            integrate_model_with_control_CNAB(tdata, u0, input; linear_matrix=linear_matrix, quadratic_matrix=quadratic_matrix, cubic_matrix=cubic_matrix,
                                               control_matrix=control_matrix, const_stepsize=const_stepsize, u2_jm1=u2_jm1, u3_jm1=u3_jm1)
         end
     else
@@ -507,5 +511,119 @@ function integrate_model(tdata::AbstractArray{T}, u0::AbstractArray{T}, input::A
     end
 end
 
+
+# ============================================================================
+# Fast SIE / CNAB integrator for Gardner.
+# ----------------------------------------------------------------------------
+#   * periodic BCs → A is a pentadiagonal circulant → FFT diagonalization
+#   * Dirichlet BCs → A has `-1/Δt` baked into the boundary rows; fallback
+#     to a sparse LU factorization (rebuilt if Δt changes).
+# SIE bakes `α = Δt`; CNAB bakes `α = Δt/2`.
+# ============================================================================
+
+"""
+$(SIGNATURES)
+
+Build a fast solver for Gardner. `scheme=:BE` is for SIE (α = Δt);
+`scheme=:CN` is for CNAB (α = Δt/2).
+"""
+function build_fast_solver(model::GardnerModel, params::Dict;
+                            scheme::Symbol=:CN, Δt::Real=model.Δt)
+    α = scheme === :BE ? Float64(Δt) :
+        scheme === :CN ? Float64(Δt)/2 :
+        error("scheme must be :BE or :CN, got $scheme")
+    out = finite_diff_model(model, params)
+    A = out isa Tuple ? out[1] : out
+    if model.BC === :periodic
+        return FastCirculant1DSolver(A, α)
+    else
+        return FactorizedSolver(sparse(A), α)
+    end
+end
+
+
+"""
+$(SIGNATURES)
+
+Fast SIE or CNAB integrator for Gardner.
+
+## Keyword Arguments
+- `quadratic_matrix`: F from `finite_diff_model`
+- `cubic_matrix`: E from `finite_diff_model`
+- `control_matrix=nothing`: B from `finite_diff_model`
+- `integrator_type::Symbol=:CNAB`: `:SIE` or `:CNAB`
+- `u2_jm1=nothing`, `u3_jm1=nothing`: AB-2 seeds (CNAB only)
+"""
+function integrate_model_fast(model::GardnerModel, solver::AbstractFastSolver,
+                              tdata::AbstractVector, u0::AbstractVector,
+                              input::AbstractArray=Float64[];
+                              quadratic_matrix, cubic_matrix,
+                              control_matrix=nothing,
+                              integrator_type::Symbol=:CNAB,
+                              u2_jm1=nothing, u3_jm1=nothing)
+    @assert integrator_type ∈ (:SIE, :CNAB) "integrator_type must be :SIE or :CNAB"
+    Xdim = length(u0)
+    Tdim = length(tdata)
+    u = zeros(Xdim, Tdim)
+    u[:, 1] = u0
+    Δt = tdata[2] - tdata[1]
+    F = quadratic_matrix
+    E = cubic_matrix
+
+    has_input = control_matrix !== nothing && !isempty(input)
+    if has_input
+        input = adjust_input(input, size(control_matrix, 2), Tdim)
+    end
+
+    rhs = Vector{Float64}(undef, Xdim)
+    tmp = Vector{Float64}(undef, Xdim)
+
+    if integrator_type === :SIE
+        # SIE: (I - Δt A) u_new = u_old + Δt F u² + Δt E u³ + Δt B input_jm1
+        @inbounds for j in 2:Tdim
+            u2 = ⊘(u[:, j-1], 2)
+            u3 = ⊘(u[:, j-1], 3)
+            @views @. rhs = u[:, j-1]
+            mul!(tmp, F, u2); @. rhs = rhs + Δt * tmp
+            mul!(tmp, E, u3); @. rhs = rhs + Δt * tmp
+            if has_input
+                @views mul!(tmp, control_matrix, input[:, j-1])
+                @. rhs = rhs + Δt * tmp
+            end
+            linsolve!(view(u, :, j), solver, rhs)
+        end
+    else
+        # CNAB: (I - Δt/2 A) u_new = (I + Δt/2 A) u_old + AB-2(F u²) + AB-2(E u³) + 0.5 Δt B (input_jm1 + input_j)
+        @inbounds for j in 2:Tdim
+            u2 = ⊘(u[:, j-1], 2)
+            u3 = ⊘(u[:, j-1], 3)
+            mulIpA!(rhs, solver, view(u, :, j-1))
+
+            if j == 2 && (u2_jm1 === nothing || u3_jm1 === nothing)
+                mul!(tmp, F, u2); @. rhs = rhs + Δt * tmp
+                mul!(tmp, E, u3); @. rhs = rhs + Δt * tmp
+            else
+                mul!(tmp, F, u2);     @. rhs = rhs + (3*Δt/2) * tmp
+                mul!(tmp, F, u2_jm1); @. rhs = rhs - (Δt/2)   * tmp
+                mul!(tmp, E, u3);     @. rhs = rhs + (3*Δt/2) * tmp
+                mul!(tmp, E, u3_jm1); @. rhs = rhs - (Δt/2)   * tmp
+            end
+
+            if has_input
+                @views begin
+                    mul!(tmp, control_matrix, input[:, j-1])
+                    @. rhs = rhs + 0.5 * Δt * tmp
+                    mul!(tmp, control_matrix, input[:, j])
+                    @. rhs = rhs + 0.5 * Δt * tmp
+                end
+            end
+
+            linsolve!(view(u, :, j), solver, rhs)
+            u2_jm1 = u2
+            u3_jm1 = u3
+        end
+    end
+    return u
+end
 
 end

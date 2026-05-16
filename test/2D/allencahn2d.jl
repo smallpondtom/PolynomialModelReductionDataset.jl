@@ -33,19 +33,31 @@
     #============#
     ## Integrate
     #============#
-    U = allencahn2d.integrate_model(
-        allencahn2d.tspan, allencahn2d.IC; 
+    Ucnab = allencahn2d.integrate_model(
+        allencahn2d.tspan, allencahn2d.IC;
         linear_matrix=A, cubic_matrix=E, system_input=false,
         integrator_type=:CNAB
     )
-    @test size(U) == (prod(allencahn2d.spatial_dim), allencahn2d.time_dim)
-    
-    U = allencahn2d.integrate_model(
-        allencahn2d.tspan, allencahn2d.IC; 
+    @test size(Ucnab) == (prod(allencahn2d.spatial_dim), allencahn2d.time_dim)
+
+    Usicn = allencahn2d.integrate_model(
+        allencahn2d.tspan, allencahn2d.IC;
         linear_matrix=A, cubic_matrix=E, system_input=false,
         integrator_type=:SICN
     )
-    @test size(U) == (prod(allencahn2d.spatial_dim), allencahn2d.time_dim)
+    @test size(Usicn) == (prod(allencahn2d.spatial_dim), allencahn2d.time_dim)
+
+    # Fast SICN / CNAB (periodic 2D → FFT-based solver)
+    solver = pomoreda.build_fast_solver(allencahn2d, allencahn2d.params; scheme=:CN)
+    @test solver isa pomoreda.FastFFT2DSolver
+    Ufast_cnab = pomoreda.integrate_model_fast(allencahn2d, solver,
+                                                 allencahn2d.tspan, allencahn2d.IC;
+                                                 cubic_matrix=E, integrator_type=:CNAB)
+    @test Ufast_cnab ≈ Ucnab
+    Ufast_sicn = pomoreda.integrate_model_fast(allencahn2d, solver,
+                                                 allencahn2d.tspan, allencahn2d.IC;
+                                                 cubic_matrix=E, integrator_type=:SICN)
+    @test Ufast_sicn ≈ Usicn
 
     #=======================#
     ## Model (Dirichlet BC)
@@ -80,17 +92,31 @@
     #============#
     ## Integrate
     #============#
-    U = allencahn2d.integrate_model(
-        allencahn2d.tspan, allencahn2d.IC, Ubc; 
+    Usicn = allencahn2d.integrate_model(
+        allencahn2d.tspan, allencahn2d.IC, Ubc;
         linear_matrix=A, cubic_matrix=E, control_matrix=B,
         system_input=true, integrator_type=:SICN,
     )
-    @test size(U) == (prod(allencahn2d.spatial_dim), allencahn2d.time_dim)
-    
-    U = allencahn2d.integrate_model(
-        allencahn2d.tspan, allencahn2d.IC, Ubc; 
+    @test size(Usicn) == (prod(allencahn2d.spatial_dim), allencahn2d.time_dim)
+
+    Ucnab = allencahn2d.integrate_model(
+        allencahn2d.tspan, allencahn2d.IC, Ubc;
         linear_matrix=A, cubic_matrix=E, control_matrix=B,
         system_input=true, integrator_type=:CNAB,
     )
-    @test size(U) == (prod(allencahn2d.spatial_dim), allencahn2d.time_dim)
+    @test size(Ucnab) == (prod(allencahn2d.spatial_dim), allencahn2d.time_dim)
+
+    # Fast SICN / CNAB (Dirichlet 2D → FastKronSumSolver)
+    solver = pomoreda.build_fast_solver(allencahn2d, allencahn2d.params; scheme=:CN)
+    @test solver isa pomoreda.FastKronSumSolver
+    Ufast_sicn = pomoreda.integrate_model_fast(allencahn2d, solver,
+                                                 allencahn2d.tspan, allencahn2d.IC, Ubc;
+                                                 cubic_matrix=E, control_matrix=B,
+                                                 integrator_type=:SICN)
+    @test Ufast_sicn ≈ Usicn
+    Ufast_cnab = pomoreda.integrate_model_fast(allencahn2d, solver,
+                                                 allencahn2d.tspan, allencahn2d.IC, Ubc;
+                                                 cubic_matrix=E, control_matrix=B,
+                                                 integrator_type=:CNAB)
+    @test Ufast_cnab ≈ Ucnab
 end

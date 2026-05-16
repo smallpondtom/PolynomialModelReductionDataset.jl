@@ -18,12 +18,20 @@
     #============#
     ## Integrate
     #============#
-    U = burgers.integrate_model(
-        burgers.tspan, burgers.IC, Ubc; 
+    Uref_d = burgers.integrate_model(
+        burgers.tspan, burgers.IC, Ubc;
         linear_matrix=A, control_matrix=B, quadratic_matrix=F,
         system_input=true
     )
-    @test size(U) == (burgers.spatial_dim, burgers.time_dim)
+    @test size(Uref_d) == (burgers.spatial_dim, burgers.time_dim)
+
+    # Fast SIE (Dirichlet — FactorizedSolver fallback because A has Δt baked in)
+    solver_d = pomoreda.build_fast_solver(burgers, burgers.diffusion_coeffs;
+                                           scheme=:BE, opposite_sign_on_ends=true)
+    @test solver_d isa pomoreda.FactorizedSolver
+    Ufast_d = pomoreda.integrate_model_fast(burgers, solver_d, burgers.tspan, burgers.IC, Ubc;
+                                             quadratic_matrix=F, control_matrix=B)
+    @test Ufast_d ≈ Uref_d
 
     #===================================#
     ## Model (Periodic BC Conservative)
@@ -96,10 +104,17 @@
     #============#
     ## Integrate
     #============#
-    U = burgers.integrate_model(
-        burgers.tspan, burgers.IC, Float64[]; 
+    Uref = burgers.integrate_model(
+        burgers.tspan, burgers.IC, Float64[];
         linear_matrix=A, quadratic_matrix=F,
         system_input=false
     )
-    @test size(U) == (burgers.spatial_dim, burgers.time_dim)
+    @test size(Uref) == (burgers.spatial_dim, burgers.time_dim)
+
+    # Fast SIE for periodic (FastCirculant1DSolver)
+    solver = pomoreda.build_fast_solver(burgers, burgers.diffusion_coeffs; scheme=:BE)
+    @test solver isa pomoreda.FastCirculant1DSolver
+    Ufast = pomoreda.integrate_model_fast(burgers, solver, burgers.tspan, burgers.IC;
+                                           quadratic_matrix=F)
+    @test Ufast ≈ Uref
 end
