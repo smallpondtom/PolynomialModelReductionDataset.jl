@@ -7,7 +7,8 @@ Kuramoto-Sivashinsky equation
 #===========#
 using CairoMakie
 using LinearAlgebra
-using PolynomialModelReductionDataset: KuramotoSivashinskyModel
+using PolynomialModelReductionDataset
+const pomoreda = PolynomialModelReductionDataset
 
 #======================#
 ## Model (Periodic BC)
@@ -16,7 +17,7 @@ using PolynomialModelReductionDataset: KuramotoSivashinskyModel
 Ω = (0.0, 22.0)
 dt = 0.01
 N = 256
-kse = KuramotoSivashinskyModel(
+kse = pomoreda.KuramotoSivashinskyModel(
     spatial_domain=Ω, time_domain=(0.0, 300.0), diffusion_coeffs=1.0,
     Δx=(Ω[2] - 1/N)/N, Δt=dt
 )
@@ -36,7 +37,10 @@ A, F = kse.finite_diff_model(kse, kse.diffusion_coeffs)
 #==================#
 ## Integrate Model
 #==================#
-U = kse.integrate_model(kse.tspan, u0, nothing; linear_matrix=A, quadratic_matrix=F, const_stepsize=true)
+t1 = @elapsed U = kse.integrate_model(
+    kse.tspan, u0, nothing; linear_matrix=A, 
+    quadratic_matrix=F, const_stepsize=true
+)
 
 #================#
 ## Plot Solution
@@ -110,3 +114,24 @@ ax.xlabel = L"t"
 ax.ylabel = L"x"
 CairoMakie.Colorbar(fig4[1, 2], hm)
 display(fig4)
+
+#==================#
+## Fast solver CNAB
+#==================#
+solver = pomoreda.build_fast_solver(
+    kse, kse.diffusion_coeffs; scheme=:CN
+)
+t2 = @elapsed Ufast = pomoreda.integrate_model_fast(
+    kse, solver, kse.tspan, u0;
+    quadratic_matrix=F
+)
+
+#================#
+## Plot Solution
+#================#
+fig5, ax, hm = CairoMakie.heatmap(kse.tspan[1:DS:end], kse.xspan, Ufast[:, 1:DS:end]');
+ax.xlabel = L"t";
+ax.ylabel = L"x";
+CairoMakie.Colorbar(fig5[1, 2], hm);
+display(fig5);
+

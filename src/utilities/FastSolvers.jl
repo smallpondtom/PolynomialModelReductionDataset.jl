@@ -7,7 +7,7 @@ arise repeatedly in implicit / semi-implicit time stepping. The factor `α`
 is baked into the solver at construction time:
 
   * Backward Euler  :  α = Δt
-  * Crank–Nicolson  :  α = Δt / 2
+  * Crank-Nicolson  :  α = Δt / 2
 
 A typical workflow is therefore
 
@@ -54,7 +54,7 @@ boundary conditions and discretization. Keyword `scheme` chooses the
 flavour of α to bake in:
 
   * `:BE`   ⇒ α = `Δt`        (backward Euler)
-  * `:CN`   ⇒ α = `Δt / 2`    (Crank–Nicolson, also used by SICN / CNAB)
+  * `:CN`   ⇒ α = `Δt / 2`    (Crank-Nicolson, also used by SICN / CNAB)
 
 Additional keyword arguments are forwarded to the model-specific builder.
 """
