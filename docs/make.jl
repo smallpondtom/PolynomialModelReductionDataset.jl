@@ -20,6 +20,7 @@ PAGES = [
         "Gardner" => "1D/gardner.md",
         "Damped Gardner-Burgers" => "1D/dgb.md",
         "FitzHugh-Nagumo" => "1D/fhn.md",
+        "Nagumo" => "1D/nagumo.md",
     ],
     "2D Models" => [
         "2D Heat" => "2D/heat2d.md",

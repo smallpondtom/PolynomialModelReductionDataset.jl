@@ -58,6 +58,7 @@ using PolynomialModelReductionDataset
 | FitzHugh-Nagumo | $u_t = \epsilon^2 u_{xx} + u(u-0.1)(1-u) - v + g$ <br/> $v_t = hu + \gamma v + g$ | [Dirichlet and Neumann](https://morwiki.mpi-magdeburg.mpg.de/morwiki/index.php/FitzHugh-Nagumo_System) |
 | Fisher-KPP | $u_t = D u_{xx} + ru(1-u)$ | periodic, Dirichlet, Dirichlet and Neumann (mixed) | 
 | Allen-Cahn | $u_t = \mu u_{xx} - \epsilon(u - u^3)$ | periodic, Dirichlet, Dirichlet and Neumann (mixed) |
+| Nagumo (bistable) | $u_t = \nu u_{xx} + u(u-a)(1-u)$ | periodic, Dirichlet, Dirichlet and Neumann (mixed) |
 | Kuramoto-Sivashinsky | $u_t = -\mu u_{xxxx} - u_{xx} - uu_x$ | periodic |
 | Kawahara | $u_t = -\mu u_{xxxx} - u_{xx} - uu_x - \delta u_{xxx} - \nu u_{xxxxx}$ | periodic |
 | Modified Korteweg-de Vries | $u_t = -\alpha u_{xxx} - \beta u^2u_{xx}$ | periodic, Dirichlet |

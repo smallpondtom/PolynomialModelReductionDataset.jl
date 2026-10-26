@@ -1,6 +1,9 @@
 ## Old and archived files 
 __old__/
 
+## Claude 
+.claude/
+
 ## JULIA
 debug.log
 *.jld2
