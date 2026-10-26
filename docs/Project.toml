@@ -8,5 +8,8 @@ LiveServer = "16fef848-5104-11e9-1b77-fb7a48bbb589"
 PolynomialModelReductionDataset = "e73a8ff0-27fc-4bea-a65d-4cea79111efd"
 UniqueKronecker = "dd29a912-d12a-442e-ae57-6933397c0393"
 
+[sources]
+PolynomialModelReductionDataset = {path = ".."}
+
 [compat]
 Documenter = "1.7"

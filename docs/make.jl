@@ -26,6 +26,7 @@ PAGES = [
         "2D Heat" => "2D/heat2d.md",
         "2D Allen-Cahn" => "2D/allencahn2d.md",
     ],
+    "Fast Solvers" => "fastsolvers.md",
     "API Reference" => "api.md",
     "Paper Reference" => "paper.md",
 ]

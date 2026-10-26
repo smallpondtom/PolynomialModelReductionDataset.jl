@@ -65,7 +65,8 @@ function build_fast_solver end
 $(SIGNATURES)
 
 Integrate a model using a pre-built fast implicit solver. Per-PDE methods
-live in each PDE module; see e.g. [`Heat2D.integrate_model_fast`](@ref).
+live in each PDE module (e.g. `Heat1D`, `Heat2D`, `Burgers`); see the
+corresponding model page for the arguments each one accepts.
 """
 function integrate_model_fast end
 
@@ -493,6 +494,33 @@ end
 # ============================================================================
 # Common operations:  linsolve!  /  mulIpA!  /  update_timestep!
 # ============================================================================
+
+"""
+    linsolve!(out, solver::AbstractFastSolver, rhs)
+
+Solve `(I - α A) out = rhs` in place using the factor cached in `solver`,
+where `α` is the value baked in at construction (or by
+[`update_timestep!`](@ref)). Returns `out`.
+"""
+function linsolve! end
+
+"""
+    mulIpA!(out, solver::AbstractFastSolver, x)
+
+Compute the forward product `out = (I + α A) x` in place, as needed by the
+explicit half of Crank-Nicolson-type schemes. Returns `out`.
+"""
+function mulIpA! end
+
+"""
+    update_timestep!(solver::AbstractFastSolver, α_new)
+
+Replace the baked-in `α` with `α_new` (e.g. after a change of time step) and
+rebuild the cached factors. The structured solvers only rescale cached
+eigenvalue factors; `FactorizedSolver` refactorizes `I - α_new A`. Returns
+`solver`.
+"""
+function update_timestep! end
 
 # ---------- FastSymTridiagSolver ----------
 
