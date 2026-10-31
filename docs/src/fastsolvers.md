@@ -60,7 +60,7 @@ update_timestep!(solver, Δt_new/2)       # change α without rebuilding
 | [`FastCirculant1DSolver`](@ref)                 | 1D circulant                                                         | 1D periodic boundaries                       |
 | [`FastKronSumSolver`](@ref)                     | ``(\mathbf{A}_y \otimes \mathbf{I}) + (\mathbf{I} \otimes \mathbf{A}_x)``, symmetric tridiagonal factors | 2D Dirichlet boundaries |
 | [`FastFFT2DSolver`](@ref)                       | Kronecker sum of two circulants                                      | 2D periodic boundaries                       |
-| [`FastDenseSolver`](@ref)                       | dense, unstructured                                                  | reduced-order models                         |
+| [`FastDenseSolver`](@ref)                       | dense, unstructured                                                  | reduced-order models; symmetric banded operators (Swift-Hohenberg Dirichlet) |
 | [`FactorizedSolver`](@ref)                      | any (sparse) matrix                                                  | fallback when no structure applies           |
 
 ## API

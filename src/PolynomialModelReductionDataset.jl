@@ -47,6 +47,7 @@ include("1D/Kawahara.jl")
 include("1D/ModifiedKortewegDeVries.jl")
 include("1D/ModifiedKortewegDeVriesBurgers.jl")
 include("1D/Nagumo.jl")
+include("1D/SwiftHohenberg.jl")
 using .AllenCahn1D: AllenCahnModel
 using .Burgers: BurgersModel
 using .DampedGardnerBurgers: DampedGardnerBurgersModel
@@ -59,6 +60,7 @@ using .Kawahara: KawaharaModel
 using .ModifiedKortewegDeVries: ModifiedKortewegDeVriesModel
 using .ModifiedKortewegDeVriesBurgers: ModifiedKortewegDeVriesBurgersModel
 using .Nagumo: NagumoModel
+using .SwiftHohenberg: SwiftHohenbergModel
 
 # 2D models
 include("2D/Heat2D.jl")

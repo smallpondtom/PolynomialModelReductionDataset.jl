@@ -60,6 +60,7 @@ using PolynomialModelReductionDataset
 | Allen-Cahn | $u_t = \mu u_{xx} - \epsilon(u - u^3)$ | periodic, Dirichlet, Dirichlet and Neumann (mixed) |
 | Nagumo (bistable) | $u_t = \nu u_{xx} + u(u-a)(1-u)$ | periodic, Dirichlet, Dirichlet and Neumann (mixed) |
 | Kuramoto-Sivashinsky | $u_t = -\mu u_{xxxx} - u_{xx} - uu_x$ | periodic |
+| Swift-Hohenberg (SH23) | $u_t = ru - (1+\partial_{xx})^2u + bu^2 - u^3$ | periodic, Dirichlet (hinged) |
 | Kawahara | $u_t = -\mu u_{xxxx} - u_{xx} - uu_x - \delta u_{xxx} - \nu u_{xxxxx}$ | periodic |
 | Modified Korteweg-de Vries | $u_t = -\alpha u_{xxx} - \beta u^2u_{xx}$ | periodic, Dirichlet |
 | Modified Korteweg-de Vries-Burgers | $u_t = -\alpha u_{xxx} - \beta u^2u_{xx} + \gamma u_{xx}$ | periodic, Dirichlet |

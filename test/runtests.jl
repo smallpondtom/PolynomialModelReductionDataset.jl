@@ -54,6 +54,7 @@ end
     testfile("1D/mKdV.jl")
     testfile("1D/mKdVB.jl")
     testfile("1D/nagumo.jl")
+    testfile("1D/swifthohenberg.jl")
 
     # 2D models
     testfile("2D/heat2d.jl")
