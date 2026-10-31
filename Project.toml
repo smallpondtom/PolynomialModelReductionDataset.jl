@@ -1,6 +1,6 @@
 name = "PolynomialModelReductionDataset"
 uuid = "e73a8ff0-27fc-4bea-a65d-4cea79111efd"
-version = "0.1.4"
+version = "0.1.5"
 authors = ["smallpondtom <tkoike45@gmail.com>"]
 
 [deps]
